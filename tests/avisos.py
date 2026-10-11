@@ -60,10 +60,11 @@ try:
             p.wait_for_timeout(700)
         ok(fase=='end','la partida llega al final')
         v=p.evaluate("window.__vib"); print('     vibraciones:',v)
-        conocidos=[[80,60,80],[600,200,600,200,600],[300,120,300,120,300],[500,200,500],[200,100,200]]
+        conocidos=[[100,60,100,60,300],[80,60,80],[600,200,600,200,600],[300,120,300,120,300],[500,200,500],[200,100,200]]
         ok(all(x in conocidos for x in v),'toda vibración es un aviso conocido (ninguna por matar, tareas, etc.)')
         ok(any(x in ([600,200,600,200,600],[300,120,300,120,300]) for x in v),'vibró al abrirse una reunión')
         ok([200,100,200] in v,'vibró al terminar la votación')
+        ok(v[-1]==[100,60,100,60,300],'vibró al terminar la partida')
         ok(not errs,f'sin errores de JS {errs}')
         br.close()
 finally:

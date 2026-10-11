@@ -1746,11 +1746,12 @@ const SON={
   cadaver:()=>tono([[300,.22],[300,.22],[300,.22],[210,.5]]),
   reunion:()=>tono([[880,.16],[620,.16],[880,.16],[620,.16],[880,.3]]),
   sabotaje:()=>tono([[230,.32,'sawtooth',.12],[170,.32,'sawtooth',.12],[230,.32,'sawtooth',.12],[170,.4,'sawtooth',.12]]),
+  fin:()=>tono([[523,.14,'triangle',.18],[659,.14,'triangle',.18],[784,.34,'triangle',.18]]),
   inicio:()=>tono([[523,.14,'triangle',.18],[659,.14,'triangle',.18],[784,.34,'triangle',.18]]),
   votacion:()=>tono([[660,.12,'triangle',.18],[880,.12,'triangle',.18],[1100,.24,'triangle',.18]])
 };
 /* Los únicos avisos con sonido y vibración, iguales para todos los móviles a la vez (nada depende del papel de nadie) */
-const VIB={cadaver:[600,200,600,200,600],reunion:[300,120,300,120,300],sabotaje:[500,200,500],inicio:[80,60,80],votacion:[200,100,200]};
+const VIB={cadaver:[600,200,600,200,600],reunion:[300,120,300,120,300],sabotaje:[500,200,500],inicio:[80,60,80],fin:[100,60,100,60,300],votacion:[200,100,200]};
 function avisa(k){if(SET.sound)try{SON[k]()}catch(e){}vibraAviso(VIB[k])}
 function eventos(){
   if(!S||!ME.pid)return;const p=mine(),pr=PREV;
@@ -1767,7 +1768,7 @@ function eventos(){
   if(S.phase==='meeting'&&pr.mn===PREV.mn&&pr.mf==='disc'&&PREV.mf==='vote')cerrarSheet();
   if(PREV.sab&&PREV.sab!==pr.sab)avisa('sabotaje');   /* cualquier sabotaje, también para el impostor */
   if(p&&PREV.dead&&!pr.dead&&S.phase==='play')cerrarSheet();
-  if(S.phase==='end'&&pr.phase!=='end'){cerrarSheet();sumarPartida()}
+  if(S.phase==='end'&&pr.phase!=='end'){avisa('fin');cerrarSheet();sumarPartida()}   /* termina la partida: igual para todos */
   if(S.notice&&S.notice.pid===ME.pid&&PREV.notice!==pr.notice)toast(S.notice.txt);
 }
 let WL=null;
@@ -1811,7 +1812,7 @@ function ajustesSheet(){
   abrirSheet(`<h2>Ajustes</h2><p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
     <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>
     ${fila('ajSonido','Sonido','sound')}${puedeVibrar()?fila('ajVibra','Vibración','vibra'):''}
-    <p class="tenue" style="margin-top:10px">Solo suenan y vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes y fin de la votación.</p>`);
+    <p class="tenue" style="margin-top:10px">Solo suenan y vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes, fin de la votación y fin de la partida.</p>`);
 }
 function vEditor(){
   const nuevo=!PERFIL,l=limpiaLook(EDIT.look);
