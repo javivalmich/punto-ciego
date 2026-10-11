@@ -9,6 +9,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        // Sonidos del juego con el interruptor de silencio (el walkie y las pruebas con micro cambian la categoría mientras están en uso)
+        AudioSesion.aplicar(walkie: false)
+        AudioSesion.vigilar()
         return true
     }
 

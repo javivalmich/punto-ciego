@@ -465,6 +465,14 @@ button.pulsado.b-alarma:not([disabled]),button.pulsado.b-jugar:not([disabled]){f
 .b-baliza:active:not([disabled]),.b-alarma:active:not([disabled]),.b-jugar:active:not([disabled]),.b-sec:active:not([disabled]),#bar .barra button:active:not([disabled]),button[data-a="unirme"]:active:not([disabled]){transform:translate(4px,4px);box-shadow:none}
 .b-baliza[disabled],.b-alarma[disabled],.b-jugar[disabled],.b-sec[disabled],#bar .barra button[disabled],button[data-a="unirme"][disabled]{box-shadow:none}
 */
+.portada{position:relative}
+.aj-btn{position:absolute;top:0;right:0;width:44px;height:44px;padding:0;border:0;background:none;color:var(--niebla);font-size:26px;line-height:1}
+:root[data-theme=light]{--acero:#F3EEE6;--casco:#E9E3D8;--chapa:#DED7CA;--remache:#C3BBAD;--tiza:#161618;--niebla:#5C5850;--baliza:#C71F15;--alarma:#C71F15;--sonar:#2C6A83;--ok:#2E7D4A}
+:root[data-theme=light] .tog.on{color:#fff}
+:root[data-theme=light] .portada .logo{mix-blend-mode:multiply;filter:invert(1) hue-rotate(180deg) brightness(1.12)}
+@media(prefers-color-scheme:light){:root:not([data-theme]){--acero:#F3EEE6;--casco:#E9E3D8;--chapa:#DED7CA;--remache:#C3BBAD;--tiza:#161618;--niebla:#5C5850;--baliza:#C71F15;--alarma:#C71F15;--sonar:#2C6A83;--ok:#2E7D4A}
+:root:not([data-theme]) .tog.on{color:#fff}
+:root:not([data-theme]) .portada .logo{mix-blend-mode:multiply;filter:invert(1) hue-rotate(180deg) brightness(1.12)}}
 </style>
 </head>
 <body>
@@ -512,7 +520,28 @@ const LS={get(k,d=null){try{const v=localStorage.getItem(k);return v==null?d:JSO
 function mmss(ms){ms=Math.max(0,ms);const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function b64(u){let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
 function deb64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
-const vibra=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+/* Ajustes de este móvil (portada ⚙): tema, sonido y vibración. Por defecto, tema oscuro (la identidad del juego), sonido y vibración encendidos. */
+const TEMAS=['auto','light','dark'];
+const SET={sound:LS.get('pc.sound',1)!==0,vibra:LS.get('pc.vibra',1)!==0,theme:(t=>TEMAS.includes(t)?t:'dark')(LS.get('pc.theme','dark'))};
+function aplicaTema(t){const r=document.documentElement;if(t==='light'||t==='dark')r.setAttribute('data-theme',t);else r.removeAttribute('data-theme');
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='light'||(t==='auto'&&matchMedia('(prefers-color-scheme: light)').matches)?'#F3EEE6':'#0C0C0C'}
+aplicaTema(SET.theme);
+function setAjuste(k,v){SET[k]=v;LS.set({sound:'pc.sound',vibra:'pc.vibra',theme:'pc.theme'}[k],k==='theme'?v:(v?1:0));if(k==='theme')aplicaTema(v)}
+/* Vibración: SOLO para avisos que llegan a todos los móviles a la vez (ver avisa() en eventos). Ninguna acción individual vibra, así que
+   nadie puede delatar su papel con el móvil en la mano. En la app (iOS no tiene navigator.vibrate) se usa @capacitor/haptics vía
+   window.Capacitor.Plugins.Haptics (sin registerPlugin): vibrate() es un zumbido de duración fija en iPhone, por eso los pulsos se espacian. */
+const hapticos=()=>{try{return(EN_APP&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Haptics)||null}catch(e){return null}};
+const puedeVibrar=()=>EN_APP?!!hapticos():typeof navigator.vibrate==='function';
+function vibraAviso(p){
+  if(!SET.vibra)return;
+  try{
+    const H=hapticos();
+    if(H){let t=0;[].concat(p).forEach((ms,i)=>{
+      if(i%2===0){const golpe=()=>{try{Promise.resolve(H.vibrate({duration:ms})).then(()=>console.log('HAPTIC ok vibrate')).catch(e=>console.log('HAPTIC error '+e))}catch(e){console.log('HAPTIC error '+e)}}; /* registro temporal para Xcode */
+        if(t)setTimeout(golpe,t);else golpe();t+=Math.max(ms,420)}else t+=ms});
+    }else if(!EN_APP&&navigator.vibrate)navigator.vibrate(p);
+  }catch(e){}
+}
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',3200)}
 
 /* ============ datos del juego ============ */
@@ -669,6 +698,21 @@ class Mq{
   close(){this.dead=true;clearInterval(this.ping);clearTimeout(this.rt);clearTimeout(this.tmo);try{this.ws&&this.ws.close()}catch(e){}}
 }
 const EN_APP=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+/* Sesión de audio. WKWebView pisa la categoría nativa, así que se fija con navigator.audioSession.type (iOS 16.4+): 'ambient' por defecto (los avisos
+   respetan el interruptor de silencio) y 'play-and-record' mientras algo usa el micro (walkie abierto, pruebas de soplar…); la categoría nativa
+   (plugin AudioSesion) queda de respaldo. El console.log es temporal, para comprobarlo en Xcode. */
+let audioTipo='';const AUDIO_USOS=new Set();
+function audioModo(m){
+  const t=m==='walkie'?'play-and-record':'ambient';
+  try{
+    if(!EN_APP)return;
+    if(navigator.audioSession&&navigator.audioSession.type!==t)navigator.audioSession.type=t;
+    if(audioTipo!==t){audioTipo=t;console.log('AUDIO tipo='+(navigator.audioSession?navigator.audioSession.type:'no disponible (solo nativo)')+' (pedido '+t+')')}
+  }catch(e){console.log('AUDIO tipo error '+e)}
+  try{const A=window.Capacitor.Plugins&&window.Capacitor.Plugins.AudioSesion;if(A)Promise.resolve(A.modo({modo:m})).catch(()=>{})}catch(e){}
+}
+const audioUso=(quien,on)=>{if(on)AUDIO_USOS.add(quien);else AUDIO_USOS.delete(quien);audioModo(AUDIO_USOS.size?'walkie':'ambient')};
+audioModo('ambient');
 /* En la app el WebView se sirve desde capacitor://localhost: sin el !EN_APP, localhost valdría también ahí y los parámetros de pruebas (?pruebas, ?supa, ?broker, ?sblib) tendrían efecto */
 const EN_LOCAL=!EN_APP&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const DEF_BROKERS=['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://public:public@public.cloud.shiftr.io'];
@@ -1068,7 +1112,7 @@ function pidPara(code){
 function cfgDefecto(venue,prev){
   const V=VENUES[venue]||VENUES.piso;
   const rooms=V.rooms.map((r,i)=>({id:'r'+i,name:r[0],type:r[1],on:i<V.def}));
-  const b=prev?{...prev}:{imp:1,tasks:4,largas:1,killCd:30,disc:60,vote:45,emerg:1,confirm:true,walkie:true,mezcla:'mix',camRoom:''};
+  const b=prev?{...prev}:{imp:1,tasks:4,largas:1,killCd:30,disc:60,vote:45,emerg:1,confirm:true,walkie:false,mezcla:'mix',camRoom:''};
   b.venue=venue in VENUES?venue:'piso';b.rooms=rooms;b.meet='r0';return b;
 }
 /* camRoom: sala (de las activas) que este anfitrión ha elegido para las cámaras; '' = al azar
@@ -1699,13 +1743,15 @@ function tono(seq){
   }
 }
 const SON={
+  cadaver:()=>tono([[300,.22],[300,.22],[300,.22],[210,.5]]),
   reunion:()=>tono([[880,.16],[620,.16],[880,.16],[620,.16],[880,.3]]),
   sabotaje:()=>tono([[230,.32,'sawtooth',.12],[170,.32,'sawtooth',.12],[230,.32,'sawtooth',.12],[170,.4,'sawtooth',.12]]),
-  muerte:()=>tono([[150,.45,'sine',.35],[80,.7,'sine',.35]]),
-  tarea:()=>tono([[660,.08,'triangle',.15],[990,.16,'triangle',.15]]),
-  fin:()=>tono([[523,.14,'triangle',.18],[659,.14,'triangle',.18],[784,.34,'triangle',.18]]),
-  votar:()=>tono([[660,.12,'triangle',.18],[880,.12,'triangle',.18],[1100,.24,'triangle',.18]])
+  inicio:()=>tono([[523,.14,'triangle',.18],[659,.14,'triangle',.18],[784,.34,'triangle',.18]]),
+  votacion:()=>tono([[660,.12,'triangle',.18],[880,.12,'triangle',.18],[1100,.24,'triangle',.18]])
 };
+/* Los únicos avisos con sonido y vibración, iguales para todos los móviles a la vez (nada depende del papel de nadie) */
+const VIB={cadaver:[600,200,600,200,600],reunion:[300,120,300,120,300],sabotaje:[500,200,500],inicio:[80,60,80],votacion:[200,100,200]};
+function avisa(k){if(SET.sound)try{SON[k]()}catch(e){}vibraAviso(VIB[k])}
 function eventos(){
   if(!S||!ME.pid)return;const p=mine(),pr=PREV;
   PREV={phase:S.phase,mn:S.meet?S.meet.n:0,mf:S.meet?S.meet.fase:'',sab:S.sab?S.sab.kind+S.sab.rooms.join():'',dead:!!(p&&p.dead),gid:S.gid,notice:S.notice?S.notice.t:0};
@@ -1713,13 +1759,15 @@ function eventos(){
     OPT.clear();REVELA=false;VISTO=false;ROLVER=false;cerrarSheet();
     for(const [id,q] of PEND)if(q.a.t!=='join')PEND.delete(id);   /* reenvíos pendientes de la partida anterior (el join sí se conserva) */
     if(S.phase!=='lobby'&&WK.abierto)WK.cerrar();
+    if(pr.phase==='lobby'&&S.phase==='play')avisa('inicio');   /* empieza la partida: aviso a todos antes de ver el papel */
   }
   if(!pr||pr.gid!==S.gid)return;
-  if(S.phase==='meeting'&&pr.mn!==PREV.mn){SON.reunion();vibra([300,120,300,120,300]);cerrarSheet();if(WK.abierto)WK.cerrar()}
-  if(S.phase==='meeting'&&pr.mn===PREV.mn&&pr.mf==='disc'&&PREV.mf==='vote'){SON.votar();vibra([200,100,200]);cerrarSheet()}   /* de debate a votación, en todos los móviles a la vez */
-  if(PREV.sab&&PREV.sab!==pr.sab&&p&&p.role!=='imp'){SON.sabotaje();vibra([500,200,500])}
-  if(p&&PREV.dead&&!pr.dead&&S.phase==='play'){SON.muerte();vibra(900);cerrarSheet()}
-  if(S.phase==='end'&&pr.phase!=='end'){SON.fin();cerrarSheet();sumarPartida()}
+  if(S.phase==='meeting'&&pr.mn!==PREV.mn){avisa(S.meet&&S.meet.body?'cadaver':'reunion');cerrarSheet();if(WK.abierto)WK.cerrar()}
+  if(S.phase==='meeting'&&pr.mn===PREV.mn&&pr.mf==='vote'&&PREV.mf==='res'){avisa('votacion');cerrarSheet()}   /* termina la votación: expulsado o no */
+  if(S.phase==='meeting'&&pr.mn===PREV.mn&&pr.mf==='disc'&&PREV.mf==='vote')cerrarSheet();
+  if(PREV.sab&&PREV.sab!==pr.sab)avisa('sabotaje');   /* cualquier sabotaje, también para el impostor */
+  if(p&&PREV.dead&&!pr.dead&&S.phase==='play')cerrarSheet();
+  if(S.phase==='end'&&pr.phase!=='end'){cerrarSheet();sumarPartida()}
   if(S.notice&&S.notice.pid===ME.pid&&PREV.notice!==pr.notice)toast(S.notice.txt);
 }
 let WL=null;
@@ -1750,12 +1798,20 @@ let VISTA='portada',PORT_VOL=false,EDIT=null,REGLAS_ABIERTAS=false;
 const reglasHTML=()=>`<details class="reglas"${REGLAS_ABIERTAS?' open':''}><summary>Cómo se juega</summary>${REGLAS}</details>`;
 document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('details.reglas'))REGLAS_ABIERTAS=e.target.open},true);
 function vPortada(){
-  return `<section class="portada"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
+  return `<section class="portada"><button class="aj-btn" data-a="ajustes" aria-label="Ajustes">&#9881;&#xFE0E;</button><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
   <ul class="rasgos"><li><b>Tareas</b>en salas de verdad de tu casa</li><li><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li><b>Un traidor</b>que nadie ha visto venir</li><li><b>Walkie</b>para hablar entre móviles</li></ul>
   <button class="b-jugar" data-a="jugar">Jugar</button>
   ${CUENTAS&&INVITADO&&!USER?`<p style="text-align:center"><button class="b-link" data-a="aAcceso">Crear cuenta o entrar</button></p>`:''}
   ${reglasHTML()}
   <p class="legal">${enlaceLegal('privacidad','Privacidad')} · ${enlaceLegal('terminos','Términos')} · ${enlaceLegal('soporte','Soporte')}</p></section>`;
+}
+/* Ajustes (⚙ de la portada): tema, sonido y vibración. Se guardan en este móvil. */
+function ajustesSheet(){
+  const fila=(a,t,k)=>`<div class="paso"><span>${t}</span><button class="tog ${SET[k]?'on':''}" data-a="${a}" role="switch" aria-checked="${SET[k]}" aria-label="${t}">${SET[k]?'Sí':'No'}</button></div>`;
+  abrirSheet(`<h2>Ajustes</h2><p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
+    <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>
+    ${fila('ajSonido','Sonido','sound')}${puedeVibrar()?fila('ajVibra','Vibración','vibra'):''}
+    <p class="tenue" style="margin-top:10px">Solo suenan y vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes y fin de la votación.</p>`);
 }
 function vEditor(){
   const nuevo=!PERFIL,l=limpiaLook(EDIT.look);
@@ -2241,7 +2297,7 @@ function disimular(desde){
   setHTML($('#shVivo'),vHojaTarea(t.id));
 }
 function tareaHecha(tid,step){
-  const p=mine();if(!p||!S)return;SON.tarea();vibra(60);
+  const p=mine();if(!p||!S)return;
   /* primero se fija la hoja en "Hecho" y se apaga SHEET.refresh: si somos el anfitrión, accion() más abajo
      aplica el cambio y repinta en el momento, y sin esto el refresco de la hoja podría borrar #juego (al
      pasar ya al siguiente paso) antes de que termináramos de escribir en él */
@@ -2256,7 +2312,7 @@ function tareaHecha(tid,step){
 function hojaFix(panel,desde){
   const p=mine();if(!S.sab||!p||p.dead)return;const r=sala(S.sab.rooms[panel])||{name:'?'};
   abrirSheet(`<p class="sh-sala">${esc(r.name)}</p><h2>Reparar</h2><p class="tenue">${S.sab.kind==='gas'?'Otra persona tiene que reparar en la otra sala casi a la vez.':'Mantén pulsado para arreglarlo.'}</p><div id="juego"></div>`,{juego:true,fix:true,sala:desde});
-  JUEGOS.hold($('#juego'),()=>{accion('fix',{panel});SON.tarea();$('#juego').innerHTML=`<p class="hecho-ok">Reparado</p>`;setTimeout(()=>{if(SHEET&&SHEET.fix)volverASala()},900)},3000);
+  JUEGOS.hold($('#juego'),()=>{accion('fix',{panel});$('#juego').innerHTML=`<p class="hecho-ok">Reparado</p>`;setTimeout(()=>{if(SHEET&&SHEET.fix)volverASala()},900)},3000);
 }
 /* ============ hoja de una sala: todo lo que puedes hacer ahí ============
    Abrirla cuenta como «estoy en esta sala» (miAct), con la misma ventana de 45 s al cerrarla. */
@@ -2454,7 +2510,7 @@ const JUEGOS={
   hold(el,ok,ms=4500){
     el.innerHTML=`<p class="g-ayuda">Mantén pulsado hasta llenar la barra. Si sueltas, vuelve a empezar.</p><button class="g-hold"><span>Mantener</span><i></i></button>`;
     const b=el.querySelector('.g-hold'),bar=b.querySelector('i');let t0=0,raf=0,fin=false;
-    const loop=()=>{const p=Math.min(1,(Date.now()-t0)/ms);bar.style.transform=`scaleX(${p})`;if(p>=1){fin=true;b.disabled=true;vibra(40);ok();return}raf=requestAnimationFrame(loop)};
+    const loop=()=>{const p=Math.min(1,(Date.now()-t0)/ms);bar.style.transform=`scaleX(${p})`;if(p>=1){fin=true;b.disabled=true;ok();return}raf=requestAnimationFrame(loop)};
     b.onpointerdown=e=>{e.preventDefault();if(fin)return;try{b.setPointerCapture(e.pointerId)}catch(_){}t0=Date.now();cancelAnimationFrame(raf);loop()};
     const suelta=()=>{if(fin)return;cancelAnimationFrame(raf);bar.style.transform='scaleX(0)'};
     b.onpointerup=suelta;b.onpointercancel=suelta;b.oncontextmenu=e=>e.preventDefault();
@@ -2467,7 +2523,7 @@ const JUEGOS={
     const loop=()=>{
       if(!el.isConnected)return;
       const paso=Math.min(1,(Date.now()-t0)/ms);bar.style.transform=`scaleX(${paso})`;txt.textContent=mmss(ms-(Date.now()-t0));
-      if(paso>=1){vibra([120,60,120]);ok();return}
+      if(paso>=1){ok();return}
       requestAnimationFrame(loop);
     };loop();
   },
@@ -2522,7 +2578,7 @@ const JUEGOS={
     el.querySelector('.g-fijar').onpointerdown=e=>{ /* en pointerdown y con la posición que se ve ahora mismo, no recalculada */
       e.preventDefault();if(!vivo)return;
       if(Math.abs(x-zc)<=W/2+TOL){
-        hits++;cta.textContent=hits+' de 3';velObj=Math.min(velObj+.12,.85);vibra(30);
+        hits++;cta.textContent=hits+' de 3';velObj=Math.min(velObj+.12,.85);
         a.classList.add('bien');setTimeout(()=>a.classList.remove('bien'),220);
         colocar();
         if(hits>=3){vivo=false;setTimeout(ok,150)}
@@ -2563,7 +2619,7 @@ const JUEGOS={
       b.style.transform=`translate(${gx*45}px,${gy*45}px)`;
       if(Math.hypot(gx,gy)<0.22)acum+=dt;else acum=Math.max(0,acum-dt*1.4);
       cta.textContent=Math.round(Math.min(1,acum/2.5)*100)+'%';
-      if(acum>=2.5){vivo=false;window.removeEventListener('deviceorientation',on);vibra(40);ok()}
+      if(acum>=2.5){vivo=false;window.removeEventListener('deviceorientation',on);ok()}
     };
     window.addEventListener('deviceorientation',on);
     SHEET.limpia=()=>{vivo=false;window.removeEventListener('deviceorientation',on)};
@@ -2577,7 +2633,7 @@ const JUEGOS={
       const dt=(now-ultimo)/1000;ultimo=now;const d=Math.hypot(bx,by)/R;
       if(activo&&d<0.22)acum+=dt;else acum=Math.max(0,acum-dt*1.4);
       cta.textContent=Math.round(Math.min(1,acum/2.5)*100)+'%';
-      if(acum>=2.5){vivo=false;vibra(40);ok();return}
+      if(acum>=2.5){vivo=false;ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     const mueve=(cx,cy)=>{const r=pista.getBoundingClientRect();bx=Math.max(-R,Math.min(R,cx-(r.left+r.width/2)));by=Math.max(-R,Math.min(R,cy-(r.top+r.height/2)));b.style.transform=`translate(${bx}px,${by}px)`};
@@ -2601,8 +2657,8 @@ const JUEGOS={
       rueda.style.transform=`rotate(${angAcum}rad)`;marcaN.textContent=num();
       const enSentido=dirNec>0?desdeUltima>0.35:desdeUltima<-0.35;
       if(num()===metas[paso]&&enSentido){
-        paso++;desdeUltima=0;dirNec=-dirNec;vibra(25);
-        if(paso>=3){vibra(40);rueda.onpointerdown=rueda.onpointermove=null;setTimeout(ok,150);return}
+        paso++;desdeUltima=0;dirNec=-dirNec;
+        if(paso>=3){rueda.onpointerdown=rueda.onpointermove=null;setTimeout(ok,150);return}
         texto();
       }
     };
@@ -2642,7 +2698,7 @@ const JUEGOS={
     };
     const enlaza=()=>cont.querySelectorAll('.g-tubo').forEach(b=>b.onclick=()=>{
       const r=+b.dataset.r,c=+b.dataset.c;grid[r][c].rot=(grid[r][c].rot+1)%4;cont.innerHTML=dibuja();enlaza();
-      if(conectado()){cont.querySelectorAll('.g-tubo').forEach(x=>{x.disabled=true;x.classList.add('hecho')});vibra(40);setTimeout(ok,300)}
+      if(conectado()){cont.querySelectorAll('.g-tubo').forEach(x=>{x.disabled=true;x.classList.add('hecho')});setTimeout(ok,300)}
     });
     enlaza();
   },
@@ -2664,10 +2720,10 @@ const JUEGOS={
     const idx=(cx,cy)=>{for(const p of pts){const b=p.getBoundingClientRect();if(Math.hypot(cx-(b.left+b.width/2),cy-(b.top+b.height/2))<26)return +p.dataset.i}return -1};
     const marca=i=>{
       if(marcado.includes(i))return;
-      if(seq[marcado.length]!==i){A.textContent='Ese no era. Otra vez.';vibra(30);svg.innerHTML='';pts.forEach(p=>p.classList.remove('on'));trazando=false;setTimeout(muestra,700);return}
+      if(seq[marcado.length]!==i){A.textContent='Ese no era. Otra vez.';svg.innerHTML='';pts.forEach(p=>p.classList.remove('on'));trazando=false;setTimeout(muestra,700);return}
       if(marcado.length){const a=pos(marcado[marcado.length-1]),b=pos(i);svg.insertAdjacentHTML('beforeend',`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="var(--ok)" stroke-width="6" stroke-linecap="round"/>`)}
       marcado.push(i);pts[i].classList.add('on');
-      if(marcado.length===seq.length){trazando=false;vibra(40);setTimeout(ok,250)}
+      if(marcado.length===seq.length){trazando=false;setTimeout(ok,250)}
     };
     cont.onpointerdown=e=>{if(fase!=='dibuja')return;e.preventDefault();trazando=true;const i=idx(e.clientX,e.clientY);if(i>=0)marca(i)};
     cont.onpointermove=e=>{if(!trazando||fase!=='dibuja')return;const i=idx(e.clientX,e.clientY);if(i>=0)marca(i)};
@@ -2690,7 +2746,7 @@ const JUEGOS={
       const dt=(now-ultimo)/1000;ultimo=now;const cerca=Math.abs(+fI.value-fT)<0.35&&Math.abs(+aI.value-aT)<4;
       if(cerca){acum+=dt;cur.setAttribute('stroke',acum>1?'var(--ok)':'var(--sonar)')}else acum=Math.max(0,acum-dt);
       cta.textContent=Math.round(Math.min(1,acum/1.4)*100)+'%';
-      if(acum>=1.4){vivo=false;vibra(40);ok();return}
+      if(acum>=1.4){vivo=false;ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
   },
@@ -2707,7 +2763,7 @@ const JUEGOS={
         const cel=celdas[f*COLS+c];if(!cel.classList.contains('ok')){cel.classList.add('ok');limpias++}
       }
       const pct=Math.round(limpias/total*100);cta.textContent=pct+'%';
-      if(pct>=90){cont.onpointerdown=cont.onpointermove=null;vibra(40);ok()}
+      if(pct>=90){cont.onpointerdown=cont.onpointermove=null;ok()}
     };
     cont.onpointerdown=e=>{e.preventDefault();activo=true;try{cont.setPointerCapture(e.pointerId)}catch(_){}limpia(e.clientX,e.clientY)};
     cont.onpointermove=e=>{if(activo)limpia(e.clientX,e.clientY)};
@@ -2723,13 +2779,13 @@ const JUEGOS={
     const loop=now=>{
       if(!vivo||!el.isConnected)return;
       const dt=(now-ultimo)/1000;ultimo=now;
-      if(activo){nivel+=dt*38;if(nivel>=100){nivel=0;cta.textContent='Se ha derramado. Otra vez.';vibra(60);activo=false;btn.classList.remove('activo')}}
+      if(activo){nivel+=dt*38;if(nivel>=100){nivel=0;cta.textContent='Se ha derramado. Otra vez.';activo=false;btn.classList.remove('activo')}}
       agua.style.height=nivel+'%';requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     btn.onpointerdown=e=>{e.preventDefault();if(!vivo)return;activo=true;btn.classList.add('activo');try{btn.setPointerCapture(e.pointerId)}catch(_){}};
     const suelta=()=>{
       if(!activo)return;activo=false;btn.classList.remove('activo');
-      if(nivel>=lo&&nivel<=hi){vivo=false;vibra(40);cta.textContent='Justo';setTimeout(ok,200)}
+      if(nivel>=lo&&nivel<=hi){vivo=false;cta.textContent='Justo';setTimeout(ok,200)}
       else cta.textContent=nivel<lo?'Aún no llega a la marca':'';
     };
     btn.onpointerup=suelta;btn.onpointercancel=suelta;
@@ -2744,7 +2800,7 @@ const JUEGOS={
     const on=e=>{
       if(!vivo)return;const a=e.accelerationIncludingGravity||e.acceleration;if(!a)return;
       const mag=Math.hypot(a.x||0,a.y||0,a.z||0);
-      if(prev!=null){const jerk=Math.abs(mag-prev);if(jerk>7){nivel=Math.min(1,nivel+jerk/220);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;window.removeEventListener('devicemotion',on);clearInterval(dren);vibra(40);ok();return}}}
+      if(prev!=null){const jerk=Math.abs(mag-prev);if(jerk>7){nivel=Math.min(1,nivel+jerk/220);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;window.removeEventListener('devicemotion',on);clearInterval(dren);ok();return}}}
       prev=mag;
     };
     window.addEventListener('devicemotion',on);
@@ -2754,7 +2810,7 @@ const JUEGOS={
   _agitarT(el,ok){
     el.innerHTML=`<p class="g-ayuda">Sin sensor de movimiento: toca rápido para llenar la barra.</p><button class="g-hold" id="gB"><span>Toca rápido</span><i id="gBar"></i></button>`;
     const btn=el.querySelector('#gB'),bar=el.querySelector('#gBar');let nivel=0,vivo=true;
-    btn.onpointerdown=e=>{e.preventDefault();if(!vivo)return;nivel=Math.min(1,nivel+.11);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;clearInterval(dren);vibra(40);ok()}};
+    btn.onpointerdown=e=>{e.preventDefault();if(!vivo)return;nivel=Math.min(1,nivel+.11);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;clearInterval(dren);ok()}};
     const dren=setInterval(()=>{if(!vivo)return;nivel=Math.max(0,nivel-.025);bar.style.transform=`scaleX(${nivel})`},200);
     SHEET.limpia=()=>{vivo=false;clearInterval(dren)};
   },
@@ -2765,9 +2821,10 @@ const JUEGOS={
     el.querySelector('#gTap').onclick=()=>JUEGOS._soplarT(el,ok);
     el.querySelector('#gMic').onclick=()=>{
       el.innerHTML=`<p class="g-ayuda">Comprobando el micro…</p>`;
+      audioUso('soplar',true);   /* play-and-record mientras dura la prueba: el micro funciona también con el iPhone en silencio */
       navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-        if(!el.isConnected){stream.getTracks().forEach(t=>t.stop());return}JUEGOS._soplarS(el,ok,stream);
-      }).catch(()=>{if(el.isConnected)JUEGOS._soplarT(el,ok)});
+        if(!el.isConnected){stream.getTracks().forEach(t=>t.stop());audioUso('soplar',false);return}JUEGOS._soplarS(el,ok,stream);
+      }).catch(()=>{audioUso('soplar',false);if(el.isConnected)JUEGOS._soplarT(el,ok)});
     };
   },
   _soplarS(el,ok,stream){
@@ -2775,14 +2832,14 @@ const JUEGOS={
     const vaho=el.querySelector('#gV'),cta=el.querySelector('#gC');
     const C=window.AudioContext||window.webkitAudioContext,ctx=new C(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();
     an.fftSize=512;src.connect(an);const buf=new Uint8Array(an.fftSize);let nivel=0,vivo=true;
-    const parar=()=>{try{ctx.close()}catch(e){}try{stream.getTracks().forEach(t=>t.stop())}catch(e){}};
+    const parar=()=>{try{ctx.close()}catch(e){}try{stream.getTracks().forEach(t=>t.stop())}catch(e){}audioUso('soplar',false)};
     const loop=()=>{
       if(!vivo||!el.isConnected)return;
       an.getByteTimeDomainData(buf);let suma=0;for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;suma+=v*v}
       const rms=Math.sqrt(suma/buf.length);
       if(rms>0.09)nivel=Math.min(1,nivel+0.02);else nivel=Math.max(0,nivel-0.01);
       vaho.style.opacity=1-nivel;cta.textContent=Math.round(nivel*100)+'%';
-      if(nivel>=1){vivo=false;parar();vibra(40);ok();return}
+      if(nivel>=1){vivo=false;parar();ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     SHEET.limpia=()=>{vivo=false;parar()};
@@ -2794,7 +2851,7 @@ const JUEGOS={
       if(!vivo||!el.isConnected)return;const dt=(now-ultimo)/1000;ultimo=now;
       if(activo)nivel=Math.min(1,nivel+dt*.5);else nivel=Math.max(0,nivel-dt*.3);
       vaho.style.opacity=1-nivel;
-      if(nivel>=1){vivo=false;vibra(40);ok();return}
+      if(nivel>=1){vivo=false;ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     btn.onpointerdown=e=>{e.preventDefault();activo=true;try{btn.setPointerCapture(e.pointerId)}catch(_){}};
@@ -2810,7 +2867,7 @@ const JUEGOS={
       if(abiertas.length===2){bloq=true;
         if(abiertas[0].dataset.e===abiertas[1].dataset.e){
           abiertas.forEach(x=>x.classList.add('hecho'));encontradas++;abiertas=[];bloq=false;
-          if(encontradas===4){vibra(40);setTimeout(ok,300)}
+          if(encontradas===4){setTimeout(ok,300)}
         }else setTimeout(()=>{abiertas.forEach(x=>{x.textContent='?';x.classList.remove('on')});abiertas=[];bloq=false},700);
       }
     });
@@ -2826,8 +2883,8 @@ const JUEGOS={
       const t0=performance.now();
       const paso=now=>{if(!b.isConnected)return;const p=Math.min(1,(now-t0)/dur);b.style.left=(derecha?-8+p*116:108-p*116)+'%';if(p<1)requestAnimationFrame(paso);else fuera()};requestAnimationFrame(paso);
       const fuera=()=>{if(b.isConnected)b.remove();vivos=vivos.filter(x=>x!==b);if(vivo)nueva()};
-      b.onpointerdown=e=>{e.preventDefault();if(!b.isConnected)return;b.remove();vivos=vivos.filter(x=>x!==b);cazadas++;cta.textContent=cazadas+' de 6';vibra(20);
-        if(cazadas>=6){vivo=false;vivos.forEach(x=>x.remove());vivos=[];vibra(40);setTimeout(ok,200);return}
+      b.onpointerdown=e=>{e.preventDefault();if(!b.isConnected)return;b.remove();vivos=vivos.filter(x=>x!==b);cazadas++;cta.textContent=cazadas+' de 6';
+        if(cazadas>=6){vivo=false;vivos.forEach(x=>x.remove());vivos=[];setTimeout(ok,200);return}
         nueva();
       };
     };
@@ -3157,7 +3214,7 @@ const WK={
   vigila(){
     const a=this.atasco(),c=this.cerrado();
     if((a||c)&&this.stream){if(a)this.reco=true;this.suelta()}
-    if(!a&&this.reco){this.reco=false;if(!c&&!this.off&&S&&mine()){this.ctx();this.micro().then(()=>this.diag()).catch(e=>{if(!e.soltado)this.estado('Toca para activar el micro')})}}
+    if(!a&&this.reco){this.reco=false;if(!c&&!this.off&&S&&mine()&&this.abierto){this.ctx();this.micro().then(()=>this.diag()).catch(e=>{if(!e.soltado)this.estado('Toca para activar el micro')})}}
   },
   desconectar(){this.off=true;this.reco=false;this.suelta();this.cerrar()},
   async empieza(){
@@ -3276,8 +3333,9 @@ const WK={
       :'<p class="wk-vacio">'+pose('movil',96)+'Aún no ha hablado nadie. Mantén el botón para hablar o escribe abajo.</p>';
     const L=$('#wkLista');if(L._h!==h){const abajo=L.scrollHeight-L.scrollTop-L.clientHeight<40;L._h=h;L.innerHTML=h;if(abajo||!L._ini){L.scrollTop=L.scrollHeight;L._ini=true}}
   },
-  abrir(){this.abierto=true;this.off=false;$('#wk').hidden=false;capas();this.ctx();this.diag();$('#wkLista')._ini=false;this.pinta()},
-  cerrar(){this.abierto=false;$('#wk').hidden=true;capas();if(this.rec)this.para(true);this.pinta()},
+  abrir(){audioUso('walkie',true);if(this.stream){const v=this.stream;this.stream=null;this.src=null;this.gen++;v.getTracks().forEach(t=>{try{t.stop()}catch(e){}})}   /* el micro se pide de nuevo ya en play-and-record: uno abierto antes en ambient quedaría mudo con el iPhone en silencio */
+    this.abierto=true;this.off=false;$('#wk').hidden=false;capas();this.ctx();this.diag();$('#wkLista')._ini=false;this.pinta()},
+  cerrar(){this.abierto=false;audioUso('walkie',false);$('#wk').hidden=true;capas();if(this.rec)this.para(true);this.pinta()},
   init(){
     $('#wkFab').onclick=()=>this.abrir();$('#wkCerrar').onclick=()=>this.cerrar();$('#wkVolver').onclick=()=>this.cerrar();$('#wkDesc').onclick=()=>this.desconectar();$('#wkFondo').onclick=()=>this.cerrar();
     const mandar=()=>{const i=$('#wkTxt'),t=i.value.trim();if(!t||this.noPuede())return;accion('chat',{txt:t});i.value=''};
@@ -3321,6 +3379,10 @@ function salir(){
 }
 function cambiaCfg(fn){if(!soyHost())return;const c=JSON.parse(JSON.stringify(S.cfg));fn(c);accion('cfg',{cfg:c})}
 const ACT={
+  ajustes(){ajustesSheet()},
+  ajTema(d){setAjuste('theme',d.v);ajustesSheet()},
+  ajSonido(){setAjuste('sound',!SET.sound);if(SET.sound)WK.ctx();ajustesSheet()},
+  ajVibra(){setAjuste('vibra',!SET.vibra);ajustesSheet()},
   jugar(){WK.ctx();PORT_VOL=false;VISTA=PERFIL?'menu':'editor';EDIT=null;scrollTo(0,0)},
   modoAcceso(d){ACCESO.modo=d.m;ACCESO.err='';ACCESO.msg=''},
   invitado(){
@@ -3436,7 +3498,7 @@ const ACT={
   volverSala(){volverASala()},
   salaMatar(){if(!SHEET||!SHEET.sala)return;const o=objetivosEnSala(SHEET.sala);if(!o.length)return;if(o.length===1){SHEET.m='conf';SHEET.p=o[0]}else{SHEET.m='matar';SHEET.obj=o}},
   salaMatarA(d){if(SHEET){SHEET.m='conf';SHEET.p=d.p}},
-  salaMatarOk(){if(!SHEET||!SHEET.p)return;accion('kill',{target:SHEET.p});vibra(40);cerrarSheet()},
+  salaMatarOk(){if(!SHEET||!SHEET.p)return;accion('kill',{target:SHEET.p});cerrarSheet()},
   salaVolver(){if(SHEET){SHEET.m=null;SHEET.p=null}},
   empezarJuego(){
     if(!SHEET)return;const {tid,step,game,dur,disimulo}=SHEET,el=$('#juego');
@@ -3456,7 +3518,7 @@ const ACT={
   menu(){hojaMas()},
   matar(){MODO={m:'matar'}},
   matarA(d){MODO={m:'conf',p:d.p}},
-  matarOk(){accion('kill',{target:MODO.p});vibra(40);cerrarSheet()},
+  matarOk(){accion('kill',{target:MODO.p});cerrarSheet()},
   volverMenu(){MODO={m:'menu'}},
   camCerrar(){const r=SHEET&&SHEET.sala;cierraCamaras();if(r)hojaSala(r)},
   camAbrir(){abreCamaras()},
@@ -3551,7 +3613,7 @@ document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id
 /* Papel: se ve solo mientras se mantiene pulsado y se oculta al soltar (táctil, ratón y teclado). Vale para el revelado
    del principio (data-hold=papel) y para «Ver mi papel» del menú (data-hold=rol) */
 function papelVisible(on,que){
-  if(on){if(que==='papel'){if(REVELA)return;REVELA=true;VISTO=true}else{if(ROLVER)return;ROLVER=true}vibra(30)}
+  if(on){if(que==='papel'){if(REVELA)return;REVELA=true;VISTO=true}else{if(ROLVER)return;ROLVER=true}}
   else{if(!REVELA&&!ROLVER)return;REVELA=false;ROLVER=false}
   pinta();
 }

@@ -32,6 +32,7 @@ with sync_playwright() as pw:
     for rol in rol_list:
       p.evaluate("r=>accion('pruebas',{rol:r})",rol)
       if rol=='imp' and nom!='SE': pass
+      p.evaluate("accion('cfg',{cfg:{walkie:true}})"); p.wait_for_timeout(300)  # el walkie viene desactivado por defecto
       p.click('[data-a=empezar]'); p.wait_for_selector('[data-hold=papel]'); p.wait_for_timeout(1500)
       g=p.evaluate(GEO); print(nom,rol,'tapa',json.dumps(g))
       ok(not g['bar'] and not g['wk'] and not g['pr'],f'{nom} {rol} tapa: sin barra/walkie/atajos'); ok(g['desborda']==False,f'{nom} {rol} tapa: no desborda')
