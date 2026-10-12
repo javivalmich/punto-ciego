@@ -30,7 +30,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <!-- Google Sign-In: ID de cliente iOS invertido (el de GOOGLE_IOS_ID de index.html, sin .apps.googleusercontent.com y con el prefijo delante). Debe coincidir (tests/google_ios.py) -->
-          <string>com.googleusercontent.apps.REEMPLAZAR</string>
+          <string>com.googleusercontent.apps.696175970854-fq2thehvb2qrub3ko7a8icj6e6mlbn41</string>
         </array>
       </dict>
     </array>

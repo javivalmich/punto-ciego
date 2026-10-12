@@ -862,7 +862,7 @@ async function sha256Hex(t){const b=await crypto.subtle.digest('SHA-256',new Tex
    debe estar también en CFBundleURLTypes de ios/App/App/Info.plist (lo comprueba tests/google_ios.py).
    GOOGLE_WEB_ID es el cliente web (el de Supabase, ver supabase/config.toml): se pasa como iOSServerClientId para que el token lleve ese cliente
    como audiencia y Supabase lo acepte sin depender de «Authorized Client IDs». */
-const GOOGLE_IOS_ID='';
+const GOOGLE_IOS_ID='696175970854-fq2thehvb2qrub3ko7a8icj6e6mlbn41.apps.googleusercontent.com';
 const GOOGLE_WEB_ID='696175970854-40tmmdnkpqb0gkclc964i72htekg42r5.apps.googleusercontent.com';
 let GOOGLE_INI=false;
 function googleCancelado(e){return /USER_CANCELLED|cancel/i.test((e&&(e.code||e.message))||'')}

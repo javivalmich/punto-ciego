@@ -34,7 +34,7 @@ srv=http.server.ThreadingHTTPServer(('127.0.0.1',8395),functools.partial(Q,direc
 PUENTE="""window.__llamadas=[];window.webkit={messageHandlers:{bridge:{postMessage(){}}}};
 window.Capacitor={isNativePlatform:()=>true,PluginHeaders:[{name:'SocialLogin',methods:[{name:'initialize',rtype:'promise'},{name:'login',rtype:'promise'}]},{name:'SignInWithApple',methods:[{name:'authorize',rtype:'promise'}]}],
   nativePromise:(pl,m,o)=>{window.__llamadas.push([pl,m,o]);return Promise.resolve(m==='login'?{result:{idToken:'token-de-google'}}:{})}};"""
-IOS_PRUEBA='111-abc.apps.googleusercontent.com'
+IOS_PRUEBA=ios or '111-abc.apps.googleusercontent.com' # con el ID real no hace falta parchear el HTML
 with sync_playwright() as pw:
     br=pw.chromium.launch(channel='msedge')
     def abre(parcheado):
@@ -48,7 +48,7 @@ with sync_playwright() as pw:
     p.evaluate("GOOGLE=!!GOOGLE_IOS_ID;APPLE=true;pinta()"); p.wait_for_timeout(200)
     orden=p.evaluate("[...document.querySelectorAll('#app [data-a=google],#app [data-a=apple]')].map(e=>e.dataset.a)")
     ok(('google' in orden)==bool(ios) and 'apple' in orden,f'app con el index real: Apple siempre, Google solo con GOOGLE_IOS_ID {orden}')
-    p,errs=abre(True)
+    p,errs=abre(not ios)
     # el sondeo de /auth/v1/settings usa la lógica real: se reproduce su condición con Google activo en Supabase
     ok(p.evaluate("EN_APP&&!!GOOGLE_IOS_ID"),'app con ID de cliente iOS: la condición de mostrar Google se cumple')
     p.evaluate("GOOGLE=true;APPLE=true;pinta()"); p.wait_for_timeout(200)
