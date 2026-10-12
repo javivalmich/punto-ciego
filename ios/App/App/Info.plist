@@ -29,8 +29,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <!-- Google Sign-In: ID de cliente iOS invertido. ID de cliente iOS invertido (el mismo que GOOGLE_IOS_ID de index.html) -->
-          <string>com.googleusercontent.apps.696175970854-40tmmdnkpqb0gkclc964i72htekg42r5</string>
+          <!-- Google Sign-In: ID de cliente iOS invertido (el de GOOGLE_IOS_ID de index.html, sin .apps.googleusercontent.com y con el prefijo delante). Debe coincidir (tests/google_ios.py) -->
+          <string>com.googleusercontent.apps.REEMPLAZAR</string>
         </array>
       </dict>
     </array>

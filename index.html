@@ -858,13 +858,17 @@ document.addEventListener('click',e=>{
 async function sha256Hex(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}
 /* Google nativo en la app: @capgo/capacitor-social-login (jsName «SocialLogin») + signInWithIdToken, con nonce como en Apple.
    GOOGLE_IOS_ID es el ID de cliente OAuth de tipo iOS (Google Cloud Console, bundle es.puntostudio.puntociego); mientras esté vacío, la app no ofrece Google.
-   Su esquema inverso (com.googleusercontent.apps.…) debe estar también en CFBundleURLTypes de ios/App/App/Info.plist. */
-const GOOGLE_IOS_ID='696175970854-40tmmdnkpqb0gkclc964i72htekg42r5.apps.googleusercontent.com';
+   Tiene que ser un cliente DISTINTO del web: con el del web, Google rechaza el inicio de sesión nativo. Su esquema inverso (com.googleusercontent.apps.…)
+   debe estar también en CFBundleURLTypes de ios/App/App/Info.plist (lo comprueba tests/google_ios.py).
+   GOOGLE_WEB_ID es el cliente web (el de Supabase, ver supabase/config.toml): se pasa como iOSServerClientId para que el token lleve ese cliente
+   como audiencia y Supabase lo acepte sin depender de «Authorized Client IDs». */
+const GOOGLE_IOS_ID='';
+const GOOGLE_WEB_ID='696175970854-40tmmdnkpqb0gkclc964i72htekg42r5.apps.googleusercontent.com';
 let GOOGLE_INI=false;
 function googleCancelado(e){return /USER_CANCELLED|cancel/i.test((e&&(e.code||e.message))||'')}
 async function entraConGoogleNativo(){
   const sl=plugin('SocialLogin');
-  if(!GOOGLE_INI){await sl.initialize({google:{iOSClientId:GOOGLE_IOS_ID,mode:'online'}});GOOGLE_INI=true}
+  if(!GOOGLE_INI){await sl.initialize({google:{iOSClientId:GOOGLE_IOS_ID,iOSServerClientId:GOOGLE_WEB_ID,mode:'online'}});GOOGLE_INI=true}
   const raw=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
   /* a Google se le da el nonce con hash; a Supabase, el original. forcePrompt evita que el plugin reutilice una sesión previa de Google (con otro nonce) */
   const r=await sl.login({provider:'google',options:{scopes:['email','profile'],nonce:await sha256Hex(raw),forcePrompt:true}});
