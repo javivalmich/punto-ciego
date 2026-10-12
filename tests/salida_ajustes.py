@@ -70,7 +70,9 @@ try:
         p.evaluate("(()=>{const m=window.ST.meet;m.fase='vote';m.votes={a:'b',b:'skip',d:'b'}})()")
         r=salida(p,'b')
         ok(r['fase']=='meeting' and 'b' not in r['ids'],'sale durante la votación: la reunión sigue')
-        ok('b' not in r['meet']['votes'] and r['meet']['votes']=={'a':'skip','d':'skip'},f"su voto no cuenta y los que le votaron pasan a saltar {r['meet']['votes']}")
+        ok(r['meet']['votes']=={},f"su voto no cuenta y quien le había votado queda sin votar {r['meet']['votes']}")
+        p.evaluate("reducir(window.ST,{t:'vote',pid:'a',target:'c',gid:window.ST.gid},ahora(),false)")
+        ok(p.evaluate(RES)['meet']['votes']=={'a':'c'},'quien había votado a quien salió puede volver a votar')
         ok(p.evaluate("(()=>{const h=vReunion;return true})()"),'(la reunión sigue pintándose)')
         # el último que faltaba por votar sale: la votación se resuelve
         p.evaluate("(()=>{const m=window.ST.meet;m.votes={a:'skip',d:'skip',h:'skip',b:'skip'}})()"); r=salida(p,'c')
@@ -85,7 +87,9 @@ try:
         p.evaluate(MONTA,[{'d':'imp'},'meeting']); salida(p,'a'); salida(p,'b'); r=salida(p,'c'); ok(r['fase']=='end' and r['w']=='imp','salidas en la reunión que igualan: ganan los Puntos')
         # votos que otro había dado a quien sale cuando ya se había votado y se expulsa a otro: sin errores
         p.evaluate(MONTA,[{'d':'imp'},'meeting']); p.evaluate("(()=>{const m=window.ST.meet;m.fase='vote';m.votes={a:'c',b:'c'}})()")
-        r=salida(p,'c'); ok('c' not in r['ids'] and set(r['meet']['votes'].values())=={'skip'},'los votos a quien sale ya no pueden expulsar a nadie')
+        r=salida(p,'c'); ok('c' not in r['ids'] and r['meet']['votes']=={} and r['meet']['fase']=='vote','los votos a quien sale desaparecen y la votación sigue abierta')
+        p.evaluate("(()=>{for(const q of ['a','b','d','h'])reducir(window.ST,{t:'vote',pid:q,target:'skip',gid:window.ST.gid},ahora(),false)})()"); r=p.evaluate(RES)
+        ok(r['meet']['fase']=='res' and r['meet']['res']['out'] is None,'tras volver a votar nadie queda expulsado por votos a quien ya no está')
 
         # ---------- 3. Salir siendo anfitrión: el mando pasa ----------
         p.evaluate(MONTA,[{'d':'imp'},'play']); r=salida(p,'h')

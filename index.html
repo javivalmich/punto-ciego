@@ -847,6 +847,14 @@ const APPLE_BUNDLE_ID='es.puntostudio.puntociego';
    del móvil que use el mismo esquema, y lo que se comparta o vuelva por correo no sirve fuera. Por eso las páginas externas se abren
    con @capacitor/browser (navegador del sistema dentro de la app) y con la URL pública, y los enlaces para compartir llevan la web. */
 const WEB_BASE='https://puntostudio.es/punto-ciego/';
+/* Ficha de la app en la App Store (https://apps.apple.com/app/idNNNNNNNNN). Cuando se tenga el ID, se rellena aquí; mientras esté vacío, la pantalla de
+   «Actualiza la app» no ofrece el botón de la tienda (el mensaje sí sale). */
+const APP_STORE_URL='';
+function abreTienda(){
+  const url=APP_STORE_URL;if(!url)return;
+  const fallo=()=>{try{window.open(url,'_system')}catch(y){}};
+  try{Promise.resolve(plugin('Browser').open({url})).catch(fallo)}catch(x){fallo()}
+}
 const LEGAL={privacidad:['/privacidad/','privacidad.html'],terminos:['terminos.html','terminos.html'],soporte:['/soporte/','soporte.html']}; /* [enlace en la web, página pública] */
 const redirigeA=()=>EN_APP?WEB_BASE:location.origin+location.pathname; /* los enlaces de los correos de Supabase se abren fuera de la app: llevan a la web */
 const enlaceLegal=(k,txt,blank)=>`<a href="${LEGAL[k][0]}" data-ext="${WEB_BASE+LEGAL[k][1]}"${blank?' target="_blank" rel="noopener"':''}>${txt}</a>`;
@@ -1289,7 +1297,7 @@ function resolver(st,now){
   m.res.quedan=st.players.filter(x=>!x.dead&&x.role==='imp').length;
 }
 /* Salir de la partida a mitad de juego (play o reunión): el jugador deja de existir para la partida, como eliminado, pero NO como muerto: no hay cuerpo ni fantasma.
-   Sus tareas salen del total (progreso solo cuenta a los jugadores que siguen), su voto desaparece y los votos que recibió pasan a «saltar».
+   Sus tareas salen del total (progreso solo cuenta a los jugadores que siguen), su voto desaparece y quien le había votado vuelve a poder votar.
    Los demás solo ven que ha salido, nunca su papel (queda en st.salidos y solo se enseña en la pantalla final). Si era el anfitrión, el mando pasa al jugador
    conectado más reciente. Después se mira si la salida acaba la partida (último Punto fuera, o los Puntos igualan a los Ciegos vivos) o hace avanzar la reunión. */
 function salidaPartida(st,p,now){
@@ -1306,7 +1314,7 @@ function salidaPartida(st,p,now){
   st.aviso={n:(st.aviso?st.aviso.n:0)+1,t:now,txt:`${p.name} ha salido de la partida`};
   if(m){
     delete m.votes[p.id];
-    for(const k of Object.keys(m.votes))if(m.votes[k]===p.id)m.votes[k]='skip';
+    if(m.fase==='vote')for(const k of Object.keys(m.votes))if(m.votes[k]===p.id)delete m.votes[k]; /* quien le votó puede volver a votar */
     if(m.listos)delete m.listos[p.id];
   }
   if(ganador(st,now,true))return;
@@ -1735,7 +1743,7 @@ function avisaAjeno(pid){
   /* los móviles que aún no tienen el control de versión solo entienden este aviso: el toast de las notas dirigidas a ellos */
   S.notice={pid,t:ahora(),txt:'Hay una versión nueva: recarga la página'};
   publicarEstado(true);eventos();pinta();
-  if(t-(AVISADOS.get('host')||0)>30000){AVISADOS.set('host',t);toast('Alguien con otra versión intenta jugar: que recargue la página')}
+  if(t-(AVISADOS.get('host')||0)>30000){AVISADOS.set('host',t);toast(EN_APP?'Alguien con otra versión intenta jugar: que actualice la app o recargue la web':'Alguien con otra versión intenta jugar: que recargue la página')}
 }
 function aplicar(a,local){
   HECHAS.add(a.id);
@@ -2192,8 +2200,21 @@ function bloqueo(){
   let e=$('#bloqueo');
   if(!BLOQUEO){if(e)e.remove();return}
   if(!e){e=document.createElement('div');e.id='bloqueo';e.setAttribute('role','alertdialog');e.setAttribute('aria-modal','true');document.body.appendChild(e);
-    e.addEventListener('click',ev=>{if(ev.target.closest('#bloqueoRecarga'))location.reload()})}
-  const h=`<div class="bq-c"><h1>Hay una versión nueva</h1><p>Recarga la página para seguir jugando.</p>
+    e.addEventListener('click',ev=>{
+      if(ev.target.closest('#bloqueoRecarga'))location.reload();
+      else if(ev.target.closest('#bloqueoTienda'))abreTienda();
+      else if(ev.target.closest('#bloqueoSalir')){BLOQUEO=null;salir()}
+    })}
+  /* En la app no sirve recargar (la pantalla del juego va dentro de la app): si la partida es más nueva, hay que actualizar desde la App Store;
+     si es más antigua, quien tiene que actualizar es el anfitrión. En la web se recarga la página, como siempre. */
+  const h=EN_APP
+    ?(BLOQUEO.vieja
+      ?`<div class="bq-c"><h1>Actualiza la app</h1><p>Esta partida usa una versión más reciente de Punto Ciego que la de tu app. Actualízala para seguir jugando.</p>
+        ${APP_STORE_URL?`<button class="b-baliza b-ancho" id="bloqueoTienda">Abrir la App Store</button>`:''}
+        <button class="b-link" id="bloqueoSalir">Salir de esta partida</button></div>`
+      :`<div class="bq-c"><h1>Versión distinta</h1><p>Esta partida usa una versión más antigua de Punto Ciego que la de tu app: el anfitrión tiene que actualizar la suya.</p>
+        <button class="b-link" id="bloqueoSalir">Salir de esta partida</button></div>`)
+    :`<div class="bq-c"><h1>Hay una versión nueva</h1><p>Recarga la página para seguir jugando.</p>
     <button class="b-baliza b-ancho" id="bloqueoRecarga">Recargar la página</button>
     <p class="tenue">${BLOQUEO.vieja?'Esta partida usa una versión más reciente que la de tu móvil.':'Esta partida usa una versión más antigua: el anfitrión también tiene que recargar la página.'}</p></div>`;
   if(e._h!==h){e._h=h;e.innerHTML=h}

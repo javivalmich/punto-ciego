@@ -2,7 +2,7 @@
 # Uso: `python tests/enlaces_app.py` (necesita playwright y Edge). Genera www/ con scripts/preparar-www.mjs y lo sirve en el puerto 8393.
 # El puente nativo se simula COMO EL REAL: window.Capacitor solo con isNativePlatform, PluginHeaders y nativePromise, SIN registerPlugin
 # (lo aporta assets/capacitor.js, el UMD de @capacitor/core). Con el index.html de la raíz y sin ese archivo, el test fallaría.
-import os,sys,subprocess,threading,functools,http.server
+import os,re,sys,subprocess,threading,functools,http.server
 from playwright.sync_api import sync_playwright
 RAIZ=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 fallos=[]
@@ -43,6 +43,19 @@ with sync_playwright() as pw:
     p.evaluate("plugin('SignInWithApple').authorize({clientId:'x'}).catch(()=>{})"); p.wait_for_timeout(200)
     ok(p.evaluate("window.__llamadas").pop()[:2]==['SignInWithApple','authorize'],'app: el plugin SignInWithApple se registra con su nombre nativo')
     ok(not errs,f'app: sin errores de JS {errs}'); ctx.close()
+    # --- app: versión de la partida distinta (APP_V): no se pide recargar, se pide actualizar la app ---
+    def bloq(p,vieja): p.evaluate(f"BLOQUEO={{vieja:{vieja}}};pinta()"); return p.evaluate("[document.querySelector('#bloqueo').innerText,!!document.querySelector('#bloqueoRecarga'),!!document.querySelector('#bloqueoTienda'),!!document.querySelector('#bloqueoSalir')]")
+    ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page()
+    p.add_init_script(PUENTE); p.goto('http://localhost:8393/'+U); portada(p)
+    t,rec,tienda,salir=bloq(p,'true')
+    ok('Actualiza la app' in t and not rec and not tienda and salir,'app, partida más nueva: «Actualiza la app», sin recargar; sin botón de tienda mientras no haya enlace')
+    t,rec,tienda,salir=bloq(p,'false'); ok('anfitrión tiene que actualizar' in t and not rec,'app, partida más antigua: pide al anfitrión que actualice, sin recargar')
+    p.click('#bloqueoSalir'); ok(p.evaluate("BLOQUEO")==None and p.locator('#bloqueo').count()==0,'app: «Salir de esta partida» quita el bloqueo'); ctx.close()
+    ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); URL_T='https://apps.apple.com/app/id1234567890'
+    p.route(re.compile(r'.*/(\?.*)?$'),lambda r:r.fulfill(status=200,content_type='text/html; charset=utf-8',body=r.fetch().text().replace("const APP_STORE_URL='';","const APP_STORE_URL='"+URL_T+"';")))
+    p.add_init_script(PUENTE); p.goto('http://localhost:8393/'+U); portada(p)
+    t,rec,tienda,salir=bloq(p,'true'); ok(tienda and not rec,'app con enlace de la tienda: botón «Abrir la App Store»')
+    p.click('#bloqueoTienda'); p.wait_for_timeout(200); ok(['Browser','open',{'url':URL_T}] in p.evaluate("window.__llamadas"),'el botón abre la ficha de la App Store'); ctx.close()
     # --- web: sin Capacitor, nada cambia ---
     ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); errs=[]; p.on('pageerror',lambda e:errs.append(str(e)))
     p.goto('http://localhost:8394/'+U); portada(p)
@@ -52,6 +65,8 @@ with sync_playwright() as pw:
     sin=p.evaluate("(()=>{let d=null;document.addEventListener('click',e=>{d=e.defaultPrevented;e.preventDefault()});document.querySelector('a[data-ext]').click();return d})()")
     ok(sin==False,'web: el clic en los enlaces no se intercepta')
     ok(p.evaluate("(()=>{ME={code:'ABCDE'};return urlPartida()})()")=='http://localhost:8394/?c=ABCDE','web: el enlace para compartir no cambia')
+    t=p.evaluate("(()=>{BLOQUEO={vieja:true};pinta();return [document.querySelector('#bloqueo').innerText,!!document.querySelector('#bloqueoRecarga'),!!document.querySelector('#bloqueoTienda')]})()")
+    ok('Recarga la página' in t[0] and t[1] and not t[2],'web, versión distinta: se pide recargar la página, como siempre')
     ok(not errs,f'web: sin errores de JS {errs}'); ctx.close()
     # --- beta: web pura, sin Capacitor ni modo app, aunque exista el puente ---
     ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); errs=[]; p.on('pageerror',lambda e:errs.append(str(e)))

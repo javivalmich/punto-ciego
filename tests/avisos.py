@@ -65,6 +65,13 @@ try:
         ok(len(p.evaluate("window.__vib"))==1,'ver el papel no vibra')
         p.wait_for_selector('[data-a=entendido]'); p.click('[data-a=entendido]'); p.wait_for_timeout(500)
         AJUSTES_PARTIDA(p)
+        # reunión forzada (emergencia del anfitrión) para no depender de que los bots lleguen a tenerla: vibra al abrirse y al terminar la votación
+        p.evaluate("window.__vib=[]"); p.evaluate("accion('emerg')"); p.wait_for_function("S&&S.phase==='meeting'",timeout=8000); p.wait_for_timeout(300)
+        v=p.evaluate("window.__vib"); ok(v==[[300,120,300,120,300]],f'la reunión de emergencia vibra al abrirse {v}')
+        t0=time.time()
+        while time.time()-t0<90 and p.evaluate("S&&S.phase==='meeting'&&S.meet.fase!=='res'"):
+            p.evaluate(BUCLE); p.wait_for_timeout(500)
+        p.wait_for_timeout(500); v=p.evaluate("window.__vib"); ok([200,100,200] in v,f'vibró al terminar la votación {v}')
         t0=time.time(); fase='play'
         while time.time()-t0<240:
             fase=p.evaluate(BUCLE)
@@ -74,8 +81,6 @@ try:
         v=p.evaluate("window.__vib"); print('     vibraciones:',v)
         conocidos=[[100,60,100,60,300],[80,60,80],[600,200,600,200,600],[300,120,300,120,300],[500,200,500],[200,100,200]]
         ok(all(x in conocidos for x in v),'toda vibración es un aviso conocido (ninguna por matar, tareas, etc.)')
-        ok(any(x in ([600,200,600,200,600],[300,120,300,120,300]) for x in v),'vibró al abrirse una reunión')
-        ok([200,100,200] in v,'vibró al terminar la votación')
         ok(v[-1]==[100,60,100,60,300],'vibró al terminar la partida')
         ok(not errs,f'sin errores de JS {errs}')
         br.close()
