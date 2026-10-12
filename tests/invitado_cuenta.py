@@ -12,7 +12,7 @@ def ok(c,m):
     if not c: fallos.append(m)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self,*a): pass
-srv=http.server.ThreadingHTTPServer(('127.0.0.1',8392),functools.partial(Q,directory=RAIZ))
+srv=http.server.ThreadingHTTPServer(('127.0.0.1',8392),functools.partial(Q,directory=os.path.join(RAIZ,'beta') if os.environ.get('PUNTO_WEB')=='beta' else RAIZ))
 threading.Thread(target=srv.serve_forever,daemon=True).start()
 pr=subprocess.Popen(['node',os.path.join(RAIZ,'mocksb.js')],env={**os.environ,'MOCKSB_DATOS':DATOS},stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL); time.sleep(1.2)
 with sync_playwright() as pw:

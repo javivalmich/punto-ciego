@@ -38,12 +38,15 @@ if(navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',fu
   --disp:Outfit,"Avenir Next",system-ui,sans-serif;
   --txt:Outfit,"Avenir Next",system-ui,-apple-system,"Segoe UI",sans-serif;
   box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{box-sizing:inherit}
-html{overscroll-behavior-y:none;scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--acero);color:var(--tiza);font-family:var(--txt);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
+html,body{overscroll-behavior:none}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--acero);color:var(--tiza);font-family:var(--txt);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:var(--vh,100vh)}
+/* pantallas que caben enteras: sin scroll ni barra (lo decide ajustaScroll); si no caben, se desliza solo lo justo */
+html.sin-scroll,html.sin-scroll body{overflow:hidden;height:var(--vh,100%)}
+body.en-menu main{padding-bottom:16px}
 h1,h2,h3{font-family:var(--disp);font-weight:700;margin:0;line-height:1.08;letter-spacing:-.01em}
 h2{font-size:24px}
 p{margin:.4em 0}
@@ -83,7 +86,7 @@ img[data-pend]{visibility:hidden}
 .fila{display:flex;gap:8px}
 .fila input{flex:1;min-width:0}
 
-#top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--acero);border-bottom:1px solid var(--remache)}
+#top{position:sticky;top:0;padding-top:env(safe-area-inset-top,0px);z-index:9;background:var(--acero);border-bottom:1px solid var(--remache)}
 .tb{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 16px;min-height:52px}
 .marca{font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:.06em;display:flex;align-items:center;gap:1px}
 .marca i{display:inline-block;width:13px;height:13px;border-radius:50%;border:2.5px solid var(--tiza);margin:0 5px 0 1px;position:relative}
@@ -386,6 +389,16 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .portada .titulo{font-weight:800;font-size:clamp(46px,15vw,64px);line-height:.98;letter-spacing:.06em;margin:4px 0 10px}
 .titulo i{display:inline-block;width:.74em;height:.74em;border-radius:50%;border:.1em solid var(--tiza);margin:0 0 0 .04em;position:relative;vertical-align:-.02em}
 .titulo i::after{content:"";position:absolute;inset:.13em;border-radius:50%;background:var(--baliza)}
+body.en-portada main{padding:6px 16px 0}
+body.en-portada .portada{padding-top:0}
+body.en-portada .portada .logo{width:min(78vw,300px,21vh);width:min(78vw,300px,21dvh)}
+body.en-portada .portada .titulo{font-size:clamp(34px,min(15vw,6vh),64px);font-size:clamp(34px,min(15vw,6dvh),64px);margin:2px 0 6px}
+body.en-portada .portada .lema{margin:0 0 10px}
+body.en-portada .rasgos{margin:0 auto 14px}
+body.en-portada .rasgos li{padding:9px 12px;font-size:13px}
+body.en-portada .rasgos b{font-size:16px}
+body.en-portada .b-jugar{min-height:56px}
+body.en-portada details.reglas{margin:12px 0 0}
 .portada .lema{margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.14em;text-wrap:balance;padding-left:.14em;text-transform:uppercase;color:var(--niebla)}
 .rasgos{list-style:none;padding:0;margin:4px auto 22px;max-width:360px;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--remache);border:1px solid var(--remache);border-radius:12px;overflow:hidden;text-align:left}
 .rasgos li{background:var(--acero);padding:12px 14px;font-size:14px;color:var(--niebla);line-height:1.3}
@@ -424,7 +437,7 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .clave .ver{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:auto;min-height:44px;padding:0 14px;background:none;border:0;color:var(--niebla);font-size:14px;font-weight:500;text-decoration:underline;text-underline-offset:3px}
 .b-google{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--casco);color:var(--tiza)}
 .b-google svg{flex:0 0 auto}
-.b-apple{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--tiza);color:#000}
+.b-apple{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#000;min-height:48px;border-color:#fff}
 .b-apple svg{flex:0 0 auto}
 .o-sep{display:flex;align-items:center;gap:12px;color:var(--niebla);font-size:14px;margin:14px 0 4px}
 .o-sep::before,.o-sep::after{content:'';flex:1;height:1px;background:var(--remache)}
@@ -518,22 +531,6 @@ function setAjuste(k,v){SET[k]=v;LS.set({sound:'pc.sound',vibra:'pc.vibra',theme
 /* Vibración: SOLO para avisos que llegan a todos los móviles a la vez (ver avisa() en eventos). Ninguna acción individual vibra, así que
    nadie puede delatar su papel con el móvil en la mano. En la app (iOS no tiene navigator.vibrate) se usa @capacitor/haptics vía
    window.Capacitor.Plugins.Haptics (sin registerPlugin): vibrate() es un zumbido de duración fija en iPhone, por eso los pulsos se espacian. */
-const EN_APP=false; /* la beta es solo web */
-/* Sesión de audio. WKWebView pisa la categoría nativa, así que se fija con navigator.audioSession.type (iOS 16.4+): 'ambient' por defecto (los avisos
-   respetan el interruptor de silencio) y 'play-and-record' mientras algo usa el micro (walkie abierto, pruebas de soplar…); la categoría nativa
-   (plugin AudioSesion) queda de respaldo. El console.log es temporal, para comprobarlo en Xcode. */
-let audioTipo='';const AUDIO_USOS=new Set();
-function audioModo(m){
-  const t=m==='walkie'?'play-and-record':'ambient';
-  try{
-    if(!EN_APP)return;
-    if(navigator.audioSession&&navigator.audioSession.type!==t)navigator.audioSession.type=t;
-    if(audioTipo!==t){audioTipo=t;console.log('AUDIO tipo='+(navigator.audioSession?navigator.audioSession.type:'no disponible (solo nativo)')+' (pedido '+t+')')}
-  }catch(e){console.log('AUDIO tipo error '+e)}
-  try{const A=window.Capacitor.Plugins&&window.Capacitor.Plugins.AudioSesion;if(A)Promise.resolve(A.modo({modo:m})).catch(()=>{})}catch(e){}
-}
-const audioUso=(quien,on)=>{if(on)AUDIO_USOS.add(quien);else AUDIO_USOS.delete(quien);audioModo(AUDIO_USOS.size?'walkie':'ambient')};
-audioModo('ambient');
 const hapticos=()=>{try{return(EN_APP&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Haptics)||null}catch(e){return null}};
 const puedeVibrar=()=>EN_APP?!!hapticos():typeof navigator.vibrate==='function';
 function vibraAviso(p){
@@ -701,15 +698,39 @@ class Mq{
   pub(topic,payload,retain){if(!this.up)return false;return this.send(packet(0x30|(retain?1:0),[new Uint8Array(mstr(topic)),payload]))}
   close(){this.dead=true;clearInterval(this.ping);clearTimeout(this.rt);clearTimeout(this.tmo);try{this.ws&&this.ws.close()}catch(e){}}
 }
-const DEF_BROKERS=['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://public:public@public.cloud.shiftr.io','wss://mqtt.eclipseprojects.io:443/mqtt'];
-const BROKERS=(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?(new URLSearchParams(location.search).get('broker')||''):'').split(',').filter(Boolean); /* solo en localhost: servidores MQTT de pruebas; en producción un enlace no puede cambiarlos */
+const EN_APP=false; /* la beta es solo web: sin Capacitor, sin plugins nativos */
+/* Sesión de audio. WKWebView pisa la categoría nativa, así que se fija con navigator.audioSession.type (iOS 16.4+): 'ambient' por defecto (los avisos
+   respetan el interruptor de silencio) y 'play-and-record' mientras algo usa el micro (walkie abierto, pruebas de soplar…); la categoría nativa
+   (plugin AudioSesion) queda de respaldo. El console.log es temporal, para comprobarlo en Xcode. */
+let audioTipo='';const AUDIO_USOS=new Set();
+function audioModo(m){
+  const t=m==='walkie'?'play-and-record':'ambient';
+  try{
+    if(!EN_APP)return;
+    if(navigator.audioSession&&navigator.audioSession.type!==t)navigator.audioSession.type=t;
+    if(audioTipo!==t){audioTipo=t;console.log('AUDIO tipo='+(navigator.audioSession?navigator.audioSession.type:'no disponible (solo nativo)')+' (pedido '+t+')')}
+  }catch(e){console.log('AUDIO tipo error '+e)}
+  try{const A=window.Capacitor.Plugins&&window.Capacitor.Plugins.AudioSesion;if(A)Promise.resolve(A.modo({modo:m})).catch(()=>{})}catch(e){}
+}
+const audioUso=(quien,on)=>{if(on)AUDIO_USOS.add(quien);else AUDIO_USOS.delete(quien);audioModo(AUDIO_USOS.size?'walkie':'ambient')};
+audioModo('ambient');
+/* En la app el WebView se sirve desde capacitor://localhost: sin el !EN_APP, localhost valdría también ahí y los parámetros de pruebas (?pruebas, ?supa, ?broker, ?sblib) tendrían efecto */
+const EN_LOCAL=!EN_APP&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const DEF_BROKERS=['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://public:public@public.cloud.shiftr.io'];
+const BROKERS=(EN_LOCAL?(new URLSearchParams(location.search).get('broker')||''):'').split(',').filter(Boolean); /* solo en localhost: servidores MQTT de pruebas; en producción un enlace no puede cambiarlos */
 if(!BROKERS.length)BROKERS.push(...DEF_BROKERS);
 const NET={cons:[],topic:null,key:null,seen:new Map()};
 async function netStart(code){
   netStop();const k=await claves(code);NET.topic=k.topic;NET.key=k.key;
   NET.cons=BROKERS.map(u=>{const m=new Mq(u,onRaw,c=>{if(c.up&&soyHost())publicarEstado(false);pintaTop();WK.diag()});m.sub(NET.topic+'/#');return m});
 }
-function netStop(){NET.cons.forEach(c=>c.close());NET.cons=[];NET.key=null}
+function netStop(){NET.cons.forEach(c=>c.close());NET.cons=[];NET.key=null;clearTimeout(NET.finT);NET.finT=0;NET.vacio=false}
+/* El estado de la partida se publica con retain=true (para que quien entra lo reciba al momento) y los brokers lo guardan. Un mensaje retenido
+   con payload vacío lo borra: se hace al terminar la partida (tras unos segundos para que todos reciban el final) y al salir el anfitrión. */
+function borraRetenido(cons=NET.cons,topic=NET.topic){
+  if(!topic)return;
+  for(const c of cons)c.pub(topic+'/s',new Uint8Array(0),true);
+}
 const redOk=()=>NET.cons.filter(c=>c.up).length;
 async function enviar(sub,obj,retain){
   if(!NET.key)return 0;const p=await cifra(obj);let ok=0;
@@ -742,7 +763,7 @@ const optK=(tid,step)=>S.gid+'|'+tid+'|'+step;   /* clave ligada a la partida: l
 let JOIN_SENT=false,BUSCA_T=0,HOST_PAUSA=0,ROLVER=false,REVELA=false,VISTO=false,SHEET=null,MODO={m:'menu'},PREV=null;
 let ACT_CONGELADA=null; /* {room,txt,hasta}: última tarea que tuve abierta, sigue contando como "dónde estoy" un rato tras cerrarla */
 
-const urlPartida=()=>location.origin+location.pathname+'?c='+ME.code;
+const urlPartida=()=>(EN_APP?WEB_BASE:location.origin+location.pathname)+'?c='+ME.code; /* en la app, el enlace para compartir y el QR llevan la web pública, no capacitor://localhost */
 const mine=()=>S&&ME.pid?S.players.find(p=>p.id===ME.pid):null;
 const soyHost=()=>!!(S&&ME.pid&&S.hostId===ME.pid);
 const P=(st,id)=>st.players.find(p=>p.id===id);
@@ -778,12 +799,13 @@ const SUPA={
   key:'sb_publishable_gS_zmhigp_Qt-h8jTyQBCg_r9WwTVU9'   // clave publicable: segura en el repo gracias a RLS
 };
 const QS=new URLSearchParams(location.search);
-const EN_LOCAL=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-/* Bots y atajos (modo pruebas) solo existen para cuentas con puede_bots=true en su perfil de Supabase, un indicador que
-   únicamente se cambia desde el servidor (ver supabase/migrations/*_puede_bots.sql). En localhost, además, ?pruebas=1 los
-   activa para los tests; en producción ese parámetro no hace nada. */
+/* Práctica con bots: la ve cualquiera (invitados incluidos) en la sala de espera cuando está solo. Los atajos de prueba (⚡ Atajos)
+   siguen reservados a cuentas con puede_bots=true en su perfil de Supabase, un indicador que únicamente se cambia desde el servidor
+   (ver supabase/migrations/*_puede_bots.sql). En localhost, además, ?pruebas=1 los activa para los tests; en producción ese
+   parámetro no hace nada. */
 const PRUEBAS_LOCAL=EN_LOCAL&&QS.get('pruebas')==='1';
-let PRUEBAS=PRUEBAS_LOCAL;
+const PRUEBAS=true;
+let ATAJOS=PRUEBAS_LOCAL;
 if(EN_LOCAL&&QS.get('supa')){SUPA.url=QS.get('supa');SUPA.key=QS.get('supakey')||''}
 const SB_LIB=(EN_LOCAL&&QS.get('sblib'))||'assets/vendor/supabase-js/supabase.js';
 const CUENTAS=!!(SUPA.url&&SUPA.key);
@@ -791,13 +813,16 @@ let SB=null,USER=null,SB_ESTADO=CUENTAS?'cargando':'off',PERFIL_CARGANDO=false,G
 let ACCESO={modo:'entrar',email:'',pw:'',err:'',msg:'',busy:false};
 let BORRAR={pw:'',palabra:'',err:'',busy:false,ver:false};
 let PERFIL=null;
+/* Modo invitado: sin cuenta, con perfil local (nombre y personaje en este móvil) y sin estadísticas. Todo lo que no depende de la cuenta funciona igual. */
+let INVITADO=!!LS.get('pc.invitado');
+const perfilLocal=()=>{const x=LS.get('pc.perfil');return x&&x.name?{name:x.name,look:limpiaLook(x.look)}:null};
 let GOOGLE=false; /* se activa solo si el proveedor Google está habilitado en Supabase */
 let APPLE=false; /* se activa solo si el proveedor Apple está habilitado en Supabase */
 if(!CUENTAS){
   PERFIL=LS.get('pc.perfil');
   if(!PERFIL&&LS.get('imp.nombre'))PERFIL={name:LS.get('imp.nombre'),look:{...LOOK0}};
   if(PERFIL)PERFIL.look=limpiaLook(PERFIL.look);
-}
+}else if(INVITADO)PERFIL=perfilLocal();
 function cargaScript(src){return new Promise((ok,ko)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>ko(new Error('no carga '+src));document.head.appendChild(e)})}
 /* ---------- Borrado de cuenta y revocación del token de Apple ----------
    La Edge Function `eliminar-cuenta` revoca el token de Apple (si entró con Apple y hay credenciales) y borra la cuenta.
@@ -809,6 +834,60 @@ async function borrarCuentaRemota(sb){
   }catch(e){}
   const {error:rpcErr}=await sb.rpc('eliminar_mi_cuenta');
   if(rpcErr)throw rpcErr;
+}
+/* App nativa (Capacitor, iOS): Sign in with Apple con el plugin @capacitor-community/apple-sign-in + signInWithIdToken.
+   Los plugins se registran por nombre (jsName nativo: «SignInWithApple», «Browser») con registerPlugin, que aporta assets/capacitor.js (ver arriba). */
+const PLUGINS={};
+const plugin=n=>PLUGINS[n]||(PLUGINS[n]=window.Capacitor.registerPlugin(n));
+const APPLE_BUNDLE_ID='es.puntostudio.puntociego';
+/* En la app la página se sirve desde capacitor://localhost: cualquier enlace que salga del WebView con ese origen se lo queda otra app
+   del móvil que use el mismo esquema, y lo que se comparta o vuelva por correo no sirve fuera. Por eso las páginas externas se abren
+   con @capacitor/browser (navegador del sistema dentro de la app) y con la URL pública, y los enlaces para compartir llevan la web. */
+const WEB_BASE='https://puntostudio.es/punto-ciego/';
+const LEGAL={privacidad:['/privacidad/','privacidad.html'],terminos:['terminos.html','terminos.html'],soporte:['/soporte/','soporte.html']}; /* [enlace en la web, página pública] */
+const redirigeA=()=>EN_APP?WEB_BASE:location.origin+location.pathname; /* los enlaces de los correos de Supabase se abren fuera de la app: llevan a la web */
+const enlaceLegal=(k,txt,blank)=>`<a href="${LEGAL[k][0]}" data-ext="${WEB_BASE+LEGAL[k][1]}"${blank?' target="_blank" rel="noopener"':''}>${txt}</a>`;
+document.addEventListener('click',e=>{
+  const a=EN_APP&&e.target.closest&&e.target.closest('a[data-ext]');if(!a)return;
+  e.preventDefault();
+  const url=a.dataset.ext,fallo=x=>{console.warn('browser',x);try{window.open(url,'_blank')}catch(y){}};
+  try{Promise.resolve(plugin('Browser').open({url})).catch(fallo)}catch(x){fallo(x)}
+});
+async function sha256Hex(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}
+/* Google nativo en la app: @capgo/capacitor-social-login (jsName «SocialLogin») + signInWithIdToken, con nonce como en Apple.
+   GOOGLE_IOS_ID es el ID de cliente OAuth de tipo iOS (Google Cloud Console, bundle es.puntostudio.puntociego); mientras esté vacío, la app no ofrece Google.
+   Tiene que ser un cliente DISTINTO del web: con el del web, Google rechaza el inicio de sesión nativo. Su esquema inverso (com.googleusercontent.apps.…)
+   debe estar también en CFBundleURLTypes de ios/App/App/Info.plist (lo comprueba tests/google_ios.py).
+   GOOGLE_WEB_ID es el cliente web (el de Supabase, ver supabase/config.toml): se pasa como iOSServerClientId para que el token lleve ese cliente
+   como audiencia y Supabase lo acepte sin depender de «Authorized Client IDs». */
+const GOOGLE_IOS_ID='696175970854-fq2thehvb2qrub3ko7a8icj6e6mlbn41.apps.googleusercontent.com';
+const GOOGLE_WEB_ID='696175970854-40tmmdnkpqb0gkclc964i72htekg42r5.apps.googleusercontent.com';
+let GOOGLE_INI=false;
+function googleCancelado(e){return /USER_CANCELLED|cancel/i.test((e&&(e.code||e.message))||'')}
+async function entraConGoogleNativo(){
+  const sl=plugin('SocialLogin');
+  if(!GOOGLE_INI){await sl.initialize({google:{iOSClientId:GOOGLE_IOS_ID,iOSServerClientId:GOOGLE_WEB_ID,mode:'online'}});GOOGLE_INI=true}
+  const raw=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
+  /* a Google se le da el nonce con hash; a Supabase, el original. forcePrompt evita que el plugin reutilice una sesión previa de Google (con otro nonce) */
+  const r=await sl.login({provider:'google',options:{scopes:['email','profile'],nonce:await sha256Hex(raw),forcePrompt:true}});
+  const tok=r&&r.result&&r.result.idToken;
+  if(!tok)throw new Error('Google no devolvió el token');
+  const {error}=await SB.auth.signInWithIdToken({provider:'google',token:tok,nonce:raw});
+  if(error)throw error;
+}
+function appleCancelado(e){return /1001|cancel/i.test((e&&(e.code||e.message))||'')}
+async function entraConAppleNativo(){
+  const apple=plugin('SignInWithApple');
+  const raw=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
+  /* a Apple se le da el nonce con hash; a Supabase, el original (así lo verifica contra el token) */
+  const r=await apple.authorize({clientId:APPLE_BUNDLE_ID,redirectURI:SUPA.url+'/auth/v1/callback',scopes:'email name',nonce:await sha256Hex(raw)});
+  const tok=r&&r.response&&r.response.identityToken;
+  if(!tok)throw new Error('Apple no devolvió el token');
+  const {error}=await SB.auth.signInWithIdToken({provider:'apple',token:tok,nonce:raw});
+  if(error)throw error;
+  /* El authorizationCode caduca a los 5 min y vale una vez: se canjea ya en el servidor para poder revocar el token al borrar la cuenta. No bloquea el acceso si falla. */
+  const code=r.response.authorizationCode;
+  if(code)try{await SB.functions.invoke('apple-canjear-codigo',{body:{authorizationCode:code}})}catch(e){console.warn('apple-canjear',e)}
 }
 /* Al entrar con Apple, Supabase da el token de Apple una sola vez: se guarda (solo el servidor puede leerlo) para poder revocarlo al borrar la cuenta */
 function guardaTokenApple(sb,ses){
@@ -827,7 +906,7 @@ async function iniciaCuentas(){
   try{
     await cargaScript(SB_LIB);
     SB=window.supabase.createClient(SUPA.url,SUPA.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-    fetch(SUPA.url+'/auth/v1/settings',{headers:{apikey:SUPA.key}}).then(r=>r.json()).then(j=>{if(j&&j.external){if(j.external.google){GOOGLE=true}if(j.external.apple){APPLE=true}pinta()}}).catch(()=>{});
+    fetch(SUPA.url+'/auth/v1/settings',{headers:{apikey:SUPA.key}}).then(r=>r.json()).then(j=>{if(j&&j.external){if(j.external.google&&(!EN_APP||GOOGLE_IOS_ID)){GOOGLE=true}if(j.external.apple){APPLE=true}pinta()}}).catch(()=>{});
     SB.auth.onAuthStateChange((ev,ses)=>{guardaTokenApple(SB,ses);setTimeout(()=>trasSesion(ev,ses),0)});
     const {data}=await SB.auth.getSession();
     await trasSesion('INICIO',data.session);
@@ -842,7 +921,8 @@ async function trasSesion(ev,ses){
   const id=u?u.id:'';
   if(id===SES_ID&&ev!=='INICIO'&&ev!=='USER_UPDATED'){USER=u;return}
   SES_ID=id;USER=u;
-  if(!USER){PERFIL=null;fijaBots(false);ACCESO.busy=false;pinta();return}
+  if(!USER){PERFIL=INVITADO?perfilLocal():null;fijaBots(false);ACCESO.busy=false;pinta();return}
+  if(INVITADO){INVITADO=false;LS.del('pc.invitado')} /* al entrar con cuenta se acaba el modo invitado */
   await cargaPerfil();
   if(ev==='SIGNED_IN'&&VISTA!=='nuevaClave'&&VISTA!=='borrarCuenta')VISTA='portada';
   ACCESO={modo:'entrar',email:'',pw:'',err:'',msg:'',busy:false};
@@ -856,7 +936,16 @@ async function cargaPerfil(){
     if(error)throw error;
     PERFIL=data?{name:data.username,look:limpiaLook(data.look),stats:{p:data.partidas|0,v:data.victorias|0,i:data.como_impostor|0}}:null;
     if(PERFIL)LS.set('pc.perfil.'+USER.id,PERFIL);
+    if(!data&&LS.get('pc.migrar')){ /* venía de jugar de invitado: la cuenta nueva conserva su nombre y su personaje */
+      const m=perfilLocal();
+      if(m){
+        const {error:e2}=await SB.from('profiles').upsert({id:USER.id,username:m.name,look:m.look,updated_at:new Date().toISOString()});
+        if(!e2){PERFIL={name:m.name,look:m.look,stats:{p:0,v:0,i:0}};LS.set('pc.perfil.'+USER.id,PERFIL)}
+        else if(!EDIT)EDIT={name:m.name,look:{...m.look}}; /* p. ej. nombre ya usado: el editor sale con sus datos para elegir otro */
+      }
+    }
   }catch(e){console.warn('perfil',e);PERFIL=cache?{...cache,look:limpiaLook(cache.look)}:null;if(cache)toast('Sin conexión con las cuentas: uso tu último perfil guardado')}
+  LS.del('pc.migrar');
   await cargaPuedeBots();
   PERFIL_CARGANDO=false;
   if(PEND_ENTRAR&&PERFIL){const c=PEND_ENTRAR;PEND_ENTRAR=null;LS.del('pc.invita');entrar(c,PERFIL.name,false)}
@@ -873,8 +962,7 @@ async function cargaPuedeBots(){
   fijaBots(ok);
 }
 function fijaBots(ok){
-  PRUEBAS=PRUEBAS_LOCAL||ok;
-  if(PRUEBAS)pruebasEnSala();
+  ATAJOS=PRUEBAS_LOCAL||ok;
 }
 function errorCuenta(e){
   const m=((e&&(e.code||''))+' '+(e&&e.message||'')).toLowerCase();
@@ -1315,7 +1403,7 @@ function reducir(st,a,now,local){
     if(['azar','crew','imp'].includes(a.rol))r.rol=a.rol;if(a.vel in BOT_VEL)r.vel=a.vel;return true;
   }
   case 'atajo':{ /* modo pruebas: fuerza una situación sin esperar. Solo el anfitrión, en local y en una partida de pruebas */
-    if(!(local&&esHost&&st.pruebas&&soloBots(st)))return true;const m=st.meet;
+    if(!(local&&ATAJOS&&esHost&&st.pruebas&&soloBots(st)))return true;const m=st.meet;
     if(a.k==='reunion'){if(st.phase==='play')reunion(st,now,st.hostId,null)}
     else if(a.k==='debate'){if(st.phase==='meeting'&&m&&m.fase==='disc'){m.fase='vote';m.until=now+st.cfg.vote*1000}}
     else if(a.k==='resolver'){if(st.phase==='meeting'&&m&&m.fase==='vote')resolver(st,now)}
@@ -1369,6 +1457,7 @@ const elige=a=>a[Math.floor(Math.random()*a.length)];
 const velBots=()=>BOT_VEL[(S&&S.pr&&S.pr.vel)||'normal']||1;
 const bt=p=>esBot(p)?'<span class="bot-tag">bot</span>':'';
 const enPruebas=()=>!!(PRUEBAS&&S&&S.pruebas&&soyHost()&&soloBots(S));
+const enAtajos=()=>ATAJOS&&enPruebas();
 function botAccion(pid,t,data){aplicar({id:uid(12),pid,t,...data},true)}
 function botAnade(n=1){
   for(let i=0;i<n;i++)botAnade1();
@@ -1566,6 +1655,9 @@ function vAtajos(){
 /* ============ red de la partida ============ */
 function publicarEstado(bump,forzar){
   if(!S||(!soyHost()&&!forzar))return;
+  if(S.phase!=='end'){NET.vacio=false;clearTimeout(NET.finT);NET.finT=0}
+  else if(NET.vacio)return; /* partida terminada y estado ya borrado de los brokers: no se vuelve a retener */
+  else if(!NET.finT)NET.finT=setTimeout(()=>{NET.finT=0;if(S&&S.phase==='end'&&soyHost()){borraRetenido();NET.vacio=true}},30000);
   if(bump)S.v++;S.hb=ahora();S.app=APP_V;
   const me=mine();if(me)me.seen=S.hb;
   LS.set('imp.st.'+ME.code,S);
@@ -1715,8 +1807,9 @@ function vPortada(){
   return `<section class="portada"><button class="aj-btn" data-a="ajustes" aria-label="Ajustes">&#9881;&#xFE0E;</button><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
   <ul class="rasgos"><li><b>Tareas</b>en salas de verdad de tu casa</li><li><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li><b>Un traidor</b>que nadie ha visto venir</li><li><b>Walkie</b>para hablar entre móviles</li></ul>
   <button class="b-jugar" data-a="jugar">Jugar</button>
+  ${CUENTAS&&INVITADO&&!USER?`<p style="text-align:center"><button class="b-link" data-a="aAcceso">Crear cuenta o entrar</button></p>`:''}
   ${reglasHTML()}
-  <p class="legal"><a href="/privacidad/">Privacidad</a> · <a href="terminos.html">Términos</a> · <a href="/soporte/">Soporte</a></p></section>`;
+  <p class="legal">${enlaceLegal('privacidad','Privacidad')} · ${enlaceLegal('terminos','Términos')} · ${enlaceLegal('soporte','Soporte')}</p></section>`;
 }
 /* Ajustes (⚙ de la portada): tema, sonido y vibración. Se guardan en este móvil. */
 const enPartida=()=>!!(S&&mine()&&(S.phase==='play'||S.phase==='meeting'));
@@ -1732,7 +1825,7 @@ function vEditor(){
   const nuevo=!PERFIL,l=limpiaLook(EDIT.look);
   const fila=(t,k,lista,sw)=>`<div class="ed-fila"><p class="lbl">${t}: <b>${esc(sw(l[k]).n)}</b></p><div class="swatches">${lista.map((_,i)=>{const x=sw(i);return `<button class="sw ${l[k]===i?'on':''}" data-a="look" data-k="${k}" data-v="${i}" aria-label="${esc(x.n)}" style="--c:${x.c}">${x.t||''}</button>`}).join('')}</div></div>`;
   return `<section class="bloque"><button class="b-link" data-a="editorVolver">‹ Volver</button><h2>${nuevo?'Crea tu personaje':'Tu personaje'}</h2>
-  <p class="tenue">${PEND_ENTRAR?'Al guardar te unes a la partida a la que te han invitado. ':''}${nuevo?`Así te verán los demás en las partidas. ${CUENTAS?'Se guarda en tu cuenta.':'Se guarda en este móvil.'}`:'Los cambios se verán en tu próxima partida.'}</p>
+  <p class="tenue">${PEND_ENTRAR?'Al guardar te unes a la partida a la que te han invitado. ':''}${nuevo?`Así te verán los demás en las partidas. ${CUENTAS&&USER?'Se guarda en tu cuenta.':'Se guarda en este móvil.'}`:'Los cambios se verán en tu próxima partida.'}</p>
   ${FIG_FALLO?'<p class="motivo">Este navegador no deja pintar el personaje, así que lo verás con los colores de serie. Tu elección se guarda igual y los demás la verán en sus móviles.</p>':''}
   <div class="ed-pegado"><div class="ed-vista">${mira()}${vivo('editor',{look:l,anim:'reposo',w:150,h:196,drag:true,yaw:.35,alt:'Vista previa de tu personaje. Arrástralo para girarlo.'})}</div>
   ${PJ.estado==='fallo'?'':'<p class="ed-tip">Arrastra el personaje para girarlo</p>'}</div>
@@ -1749,7 +1842,7 @@ function vEditor(){
   ${fila('Guantes','glove',GUANTES,i=>({n:GUANTES[i][0],c:GUANTES[i][1]||'#F1ECE3'}))}
   ${fila('Ojos','eye',OJOS,i=>({n:OJOS[i][0],c:OJOS[i][1]||'#F1ECE3'}))}
   <div class="bloque"><button class="b-baliza b-ancho" data-a="guardarPerfil" ${GUARDANDO?'disabled':''}>${GUARDANDO?'Guardando…':nuevo?'Guardar y continuar':'Guardar cambios'}</button>
-  ${nuevo?(CUENTAS&&USER?`<button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:`<button class="b-link" data-a="aPortada">Volver</button>`):`<button class="b-link" data-a="aMenu">Cancelar</button>`}</div></section>`;
+  ${nuevo?(CUENTAS&&USER?`<button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:`<button class="b-link" data-a="${CUENTAS&&INVITADO?'aAcceso':'aPortada'}">Volver</button>`):`<button class="b-link" data-a="aMenu">Cancelar</button>`}</div></section>`;
 }
 const G_LOGO='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 const A_LOGO='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#000" d="M16.365 1.43c0 1.14-.416 2.06-1.25 2.79-.905.79-1.998 1.24-3.017 1.16-.12-1.11.42-2.1 1.24-2.85.86-.79 2.03-1.26 3.02-1.1zM20.6 17.06c-.44 1.02-.96 2.02-1.63 2.94-.9 1.26-1.83 2.5-3.3 2.53-1.44.03-1.9-.86-3.55-.86-1.65 0-2.16.83-3.53.89-1.4.06-2.47-1.36-3.38-2.6C3.42 17.4 2 12.79 3.87 9.66c.93-1.55 2.6-2.53 4.4-2.55 1.38-.03 2.68.93 3.53.93.84 0 2.43-1.15 4.1-.98.7.03 2.66.28 3.92 2.1-.1.06-2.34 1.37-2.32 4.08.03 3.24 2.84 4.32 2.87 4.33-.03.09-.44 1.53-1.47 2.99z"/></svg>';
@@ -1762,8 +1855,9 @@ function vAcceso(){
   return `<section class="portada acc"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
   ${PEND_ENTRAR?`<p class="aviso-inv" role="status">Te han invitado a una partida: entra para unirte.</p>`:''}
   <div class="bloque acc-caja"><div class="pestanas"><button class="${crear?'':'on'}" data-a="modoAcceso" data-m="entrar">Entrar</button><button class="${crear?'on':''}" data-a="modoAcceso" data-m="crear">Crear cuenta</button></div>
-  ${GOOGLE?`<button class="b-google b-ancho" data-a="google" ${a.busy?'disabled':''}>${G_LOGO}<span>${crear?'Registrarme con Google':'Entrar con Google'}</span></button>`:''}
-  ${APPLE?`<button class="b-apple b-ancho" data-a="apple" ${a.busy?'disabled':''}>${A_LOGO}<span>${crear?'Registrarme con Apple':'Entrar con Apple'}</span></button>`:''}
+  ${(()=>{const g=GOOGLE?`<button class="b-google b-ancho" data-a="google" ${a.busy?'disabled':''}>${G_LOGO}<span>${crear?'Registrarme con Google':'Entrar con Google'}</span></button>`:'',
+    ap=APPLE?`<button class="b-apple b-ancho" data-a="apple" ${a.busy?'disabled':''}>${A_LOGO}<span>Continuar con Apple</span></button>`:'';
+    return EN_APP?ap+g:g+ap})()}
   ${GOOGLE||APPLE?`<div class="o-sep" aria-hidden="true">o con tu correo</div>`:''}
   <p class="tenue">${crear?'Con tu cuenta tu personaje y tus partidas te siguen a cualquier móvil.':'Entra con el correo y la contraseña de tu cuenta.'}</p>
   <p><label class="lbl" for="em">Correo</label><input id="em" type="email" autocomplete="email" inputmode="email" value="${esc(a.email)}" placeholder="tu@correo.com"></p>
@@ -1771,8 +1865,10 @@ function vAcceso(){
   ${a.err?`<p class="motivo" role="alert">${esc(a.err)}</p>`:''}${a.msg?`<p class="aviso-ok" role="status">${esc(a.msg)}</p>`:''}
   <button class="b-baliza b-ancho" data-a="${crear?'crearCuenta':'entrarCuenta'}" ${a.busy?'disabled':''}>${a.busy?'Un momento…':crear?'Crear cuenta':'Entrar'}</button>
   ${crear?'':`<p style="text-align:center"><button class="b-link" data-a="olvido">He olvidado la contraseña</button></p>`}</div>
+  <div class="bloque"><button class="b-sec b-ancho" data-a="invitado">Jugar sin cuenta</button>
+  <p class="tenue" style="text-align:center;font-size:14px">Tu nombre y tu personaje se guardan solo en este móvil y no hay estadísticas. Puedes crear una cuenta cuando quieras.</p></div>
   ${reglasHTML()}
-  <p class="legal">Al crear una cuenta (mínimo 14 años) aceptas los <a href="terminos.html" target="_blank" rel="noopener">términos y condiciones</a> y la <a href="/privacidad/" target="_blank" rel="noopener">política de privacidad</a>.</p></section>`;
+  <p class="legal">Al crear una cuenta (mínimo 14 años) aceptas los ${enlaceLegal('terminos','términos y condiciones',1)} y la ${enlaceLegal('privacidad','política de privacidad',1)}.</p></section>`;
 }
 function campoBorrar(){
   const ver=!!BORRAR.ver;
@@ -1798,7 +1894,7 @@ function vNuevaClave(){
 function vEsperaCuentas(txt){return `<section class="portada acc" role="status"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">${txt}</p></section>`}
 function vHome(){
   if(VISTA==='nuevaClave')return vNuevaClave();
-  if(CUENTAS){
+  if(CUENTAS&&!(INVITADO&&!USER)){
     if(SB_ESTADO==='cargando')return vEsperaCuentas('Cargando…');
     if(SB_ESTADO==='error')return `<section class="bloque"><h2>No se puede conectar con las cuentas</h2><p class="tenue">Comprueba la conexión a internet y vuelve a intentarlo.</p><button class="b-baliza b-ancho" data-a="reintentarCuentas">Reintentar</button></section>`;
     if(!USER)return vAcceso();
@@ -1818,10 +1914,10 @@ function vHome(){
   ${q?`<div class="bloque"><button class="b-link" data-a="crear">Crear una partida nueva</button></div>`:''}
   ${ult?`<div class="bloque"><button class="b-link" data-a="volver" data-c="${esc(ult)}">Volver a la partida ${esc(ult)}</button></div>`:''}
   ${PRUEBAS_LOCAL?`<div class="bloque"><button class="b-link" data-a="galeria">Galería de minijuegos (pruebas)</button></div>`:''}
-  <p><button class="b-link" data-a="aPortada">Pantalla de inicio</button>${CUENTAS&&USER?` <span class="tenue sep">·</span> <button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:''}</p>
-  <p class="tenue pie">${CUENTAS&&USER?`Sesión iniciada con ${esc(USER.email||'')}.`:'Tu perfil se guarda solo en este móvil.'}</p>
+  <p><button class="b-link" data-a="aPortada">Pantalla de inicio</button>${CUENTAS&&USER?` <span class="tenue sep">·</span> <button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:CUENTAS?` <span class="tenue sep">·</span> <button class="b-link" data-a="aAcceso">Entrar o crear cuenta</button>`:''}</p>
+  <p class="tenue pie">${CUENTAS&&USER?`Sesión iniciada con ${esc(USER.email||'')}.`:INVITADO?'Juegas sin cuenta: tu perfil se guarda solo en este móvil y no hay estadísticas.':'Tu perfil se guarda solo en este móvil.'}</p>
   ${CUENTAS&&USER?`<p><button class="b-link peligro" data-a="aBorrarCuenta">Eliminar cuenta</button></p>`:''}
-  <p class="legal"><a href="/privacidad/" target="_blank" rel="noopener">Privacidad</a> · <a href="terminos.html" target="_blank" rel="noopener">Términos</a> · <a href="/soporte/" target="_blank" rel="noopener">Soporte</a></p>`;
+  <p class="legal">${enlaceLegal('privacidad','Privacidad',1)} · ${enlaceLegal('terminos','Términos',1)} · ${enlaceLegal('soporte','Soporte',1)}</p>`;
 }
 function vBuscando(){
   const lento=Date.now()-BUSCA_T>7000;
@@ -1844,8 +1940,8 @@ function vPruebas(){
   const nb=S.players.filter(esBot).length,pr=S.pr||{rol:'azar',vel:'normal'};
   const chips=(a,lista,cur)=>`<div class="chips">${lista.map(([k,t])=>`<button class="chip ${cur===k?'on':''}" data-a="${a}" data-v="${k}">${t}</button>`).join('')}</div>`;
   const lleno=S.players.length>=15;
-  return `<section class="bloque prueba"><h2>Bots <span class="bot-tag">solo tú lo ves</span></h2>
-  <p class="tenue">Juega solo con bots: se unen, hacen tareas, votan y los Puntos matan y sabotean. Viven en este móvil y estas partidas no cuentan para tus estadísticas. Hacen falta 4 jugadores para empezar.</p>
+  return `<section class="bloque prueba"><h2>Práctica con bots <span class="bot-tag">bots</span></h2>
+  <p class="tenue">Para probar el juego tú solo. Los bots son jugadores simulados (llevan la etiqueta «bot»): se unen, hacen tareas, votan y los Puntos matan y sabotean. Viven en este móvil, se van en cuanto se une una persona y estas partidas no cuentan para tus estadísticas. Hacen falta 4 jugadores para empezar.</p>
   <p class="lbl">${nb} ${nb===1?'bot':'bots'} en la sala</p>
   <div class="pr-fila"><button data-a="botMas3" ${lleno?'disabled':''}>Añadir bots</button><button data-a="botMas" ${lleno?'disabled':''}>+1 bot</button><button data-a="botQuita" ${nb?'':'disabled'}>Quitar bots</button></div>
   <p class="lbl">Mi papel en la próxima partida</p>${chips('prRol',[['azar','Aleatorio'],['crew','Ciego'],['imp','Punto']],pr.rol)}
@@ -2082,15 +2178,15 @@ function pinta(){
   }
   const app=$('#app'),bar=$('#bar'),over=$('#over');
   setHTML(app,h);setHTML(bar,b);bar.hidden=!b;setHTML(over,o);over.hidden=!o;
-  document.body.classList.toggle('en-juego',!!b);document.body.classList.toggle('en-over',!!o);
+  document.body.classList.toggle('en-portada',!!app.querySelector('.portada:not(.acc)'));document.body.classList.toggle('en-juego',!!b);document.body.classList.toggle('en-menu',!ME.code&&!!app.querySelector('.perfil'));document.body.classList.toggle('en-over',!!o);
   document.body.classList.toggle('ov-pleno',!!o&&!over.querySelector('.ov-tira'));document.body.classList.toggle('ov-tira',!!o&&!!over.querySelector('.ov-tira'));
   if(b)document.documentElement.style.setProperty('--bar-h',bar.getBoundingClientRect().height+'px');
   $('#wkFab').classList.toggle('solo',!b);
-  const pf=$('#prFab');if(pf){const q=mine();pf.hidden=!(enPruebas()&&q&&(S.phase==='play'||S.phase==='meeting'));pf.classList.toggle('solo',!b)}
+  const pf=$('#prFab');if(pf){const q=mine();pf.hidden=!(enAtajos()&&q&&(S.phase==='play'||S.phase==='meeting'));pf.classList.toggle('solo',!b)}
   if(SHEET&&(SHEET.juego||SHEET.sala)){const p=mine();if(!S||S.phase!=='play'||!p||(p.dead&&p.body))cerrarSheet()}
   if(SHEET&&SHEET.camaras){const p=mine();if(!S||S.phase!=='play'||!p||p.dead)cierraCamaras()}
   if(SHEET&&SHEET.refresh){const el=$('#shVivo');if(el)setHTML(el,SHEET.refresh())}
-  capas();WK.pinta();relojes();aplicaFiguras();
+  capas();ajustaScroll();WK.pinta();relojes();aplicaFiguras();
   if(S&&S.phase==='end'&&CUENTAS&&USER)sumarPartida();
 }
 /* ============ capas: lo que hay debajo de una pantalla completa o una hoja ni se desliza ni se toca ============
@@ -2102,6 +2198,16 @@ let CAPA_Y=null;
 /* altura realmente visible (con la barra de Safari): 100vh en iPhone es la teórica, innerHeight la real */
 function mideVh(){const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;document.documentElement.style.setProperty('--vh',Math.round(h)+'px')}
 mideVh();addEventListener('resize',mideVh);addEventListener('orientationchange',()=>setTimeout(mideVh,200));if(window.visualViewport)visualViewport.addEventListener('resize',mideVh);
+/* portada, menú de jugar y partida en curso: si caben en la pantalla no se deslizan (ni barra ni rebote); si no, se desliza lo justo */
+function ajustaScroll(){
+  const h=document.documentElement,b=document.body;
+  if(CAPA_Y!==null)return;
+  if(!(b.classList.contains('en-portada')||b.classList.contains('en-menu')||b.classList.contains('en-juego'))){h.classList.remove('sin-scroll');return}
+  const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+  const need=$('#top').offsetHeight+$('#app').offsetHeight+(parseFloat(getComputedStyle(h).paddingBottom)||0);
+  h.classList.toggle('sin-scroll',need<=vh+1);
+  if(h.classList.contains('sin-scroll')&&(window.scrollY||h.scrollTop))window.scrollTo(0,0);
+}
 function capas(){
   const bq=!!$('#bloqueo'),sheet=!$('#sheet').hidden,wk=!$('#wk').hidden,ov=!$('#over').hidden;
   const abierta=bq||sheet||wk||ov||!!document.querySelector('.apagon');
@@ -3121,7 +3227,9 @@ const WK={
   desconectar(){this.off=true;this.reco=false;this.suelta();this.cerrar()},
   async empieza(){
     const no=this.noPuede();if(no){this.estado(no);return}
-    if(this.rec)return;const c=this.ctx();
+    if(this.rec)return;
+    if(!redOk()){this.estado('Sin conexión con el servidor del walkie: reintentando…');this.diag();return}
+    const c=this.ctx();
     const r=this.rec={id:uid(10),n:0,ch:this.canal(),t0:Date.now(),pico:0,partes:[],arrancando:true};
     this.btn(true);this.estado('Abriendo micro…');
     try{await this.micro()}catch(e){if(this.rec===r)this.rec=null;this.btn(false);this.nivel(0);
@@ -3167,7 +3275,7 @@ const WK={
     if(r.mr){try{r.mr.stop()}catch(e){}}
     else{this.paraSP(r);this.trozo(r,(r.buf||[]).splice(0),true);
       const tot=r.partes.reduce((a,x)=>a+x.length,0);if(tot>800){const pcm=new Float32Array(tot);let o=0;for(const x of r.partes){pcm.set(x,o);o+=x.length}this.voces.push({t:ahora(),pid:ME.pid,ch:r.ch,pcm,dur:tot/8000});}}
-    this.ruido(.07,.1);this.estado('Enviado');setTimeout(()=>{if(!this.rec)this.estado('')},1500);this.pinta();
+    const sinRed=!redOk();this.ruido(.07,.1);this.estado(sinRed?'No se pudo enviar: sin conexión con el servidor':'Enviado');setTimeout(()=>{if(!this.rec)this.estado('')},sinRed?4000:1500);this.pinta();
   },
   subir(pcm){const c=this.ctx(),sr=c.sampleRate,n=Math.max(1,Math.floor(pcm.length*sr/8000)),b=c.createBuffer(1,n,sr),d=b.getChannelData(0),k=8000/sr;
     for(let i=0;i<n;i++){const x=i*k,i0=Math.floor(x),f=x-i0;d[i]=(pcm[i0]||0)*(1-f)+(pcm[i0+1]||pcm[i0]||0)*f}return b},
@@ -3256,10 +3364,6 @@ const WK={
 
 /* ============ acciones de la interfaz ============ */
 const qsExtra=()=>[PRUEBAS_LOCAL?'pruebas=1':''].filter(Boolean);
-/* el anfitrión de una cuenta con bots abre su sala (aún sin nadie más) en modo pruebas */
-function pruebasEnSala(){
-  if(S&&PRUEBAS&&S.hostId===ME.pid&&S.phase==='lobby'&&!S.pruebas&&soloBots(S)){S.pruebas=true;S.pr={rol:'azar',vel:'normal'};publicarEstado(true);pinta()}
-}
 async function entrar(code,name,crear){
   ME={code,pid:pidPara(code),name};LS.set('imp.pid.'+code,ME.pid);LS.set('imp.ultima',code);
   JOIN_SENT=false;PEND.clear();OPT.clear();PREV=null;OFF=0;OFFS=[];S=null;BUSCA_T=Date.now();HECHAS=new Set();
@@ -3272,6 +3376,8 @@ async function entrar(code,name,crear){
   despierto();pinta();
 }
 function salir(){
+  /* si queda alguien, quien coja el mando vuelve a publicar. Va tras la salida (que publica el estado sin el anfitrión, y cifrar es asíncrono) y antes de cerrar las conexiones */
+  if(soyHost()){const cons=NET.cons,topic=NET.topic;setTimeout(()=>borraRetenido(cons,topic),450)}
   if(S&&mine()&&S.phase==='lobby'){const a=accion('leave');if(a)setTimeout(()=>enviar('a',a),250)} /* salida a propósito: se avisa dos veces y el anfitrión la aplica y publica al momento */
   const code=ME.code,cons=NET.cons;setTimeout(()=>{if(NET.cons===cons)netStop()},600);
   ME={code:null,pid:null,name:ME.name};S=null;VISTA='menu';PEND.clear();cerrarSheet();WK.cerrar();WK.reco=false;WK.suelta();LS.del('imp.ultima');
@@ -3287,14 +3393,27 @@ const ACT={
   ajVibra(){setAjuste('vibra',!SET.vibra);ajustesSheet()},
   jugar(){WK.ctx();PORT_VOL=false;VISTA=PERFIL?'menu':'editor';EDIT=null;scrollTo(0,0)},
   modoAcceso(d){ACCESO.modo=d.m;ACCESO.err='';ACCESO.msg=''},
+  invitado(){
+    LS.del('pc.migrar');INVITADO=true;LS.set('pc.invitado',1);PERFIL=perfilLocal();PORT_VOL=false;EDIT=null;scrollTo(0,0);
+    if(PEND_ENTRAR){if(PERFIL){const c=PEND_ENTRAR;PEND_ENTRAR=null;LS.del('pc.invita');entrar(c,PERFIL.name,false);return}VISTA='editor';return}
+    VISTA='portada'},
+  aAcceso(){if(INVITADO&&perfilLocal())LS.set('pc.migrar',1);INVITADO=false;LS.del('pc.invitado');PERFIL=null;EDIT=null;VISTA='portada';scrollTo(0,0)},
   verClave(){ACCESO.ver=!ACCESO.ver},
   async google(){
     const a=ACCESO;a.err='';a.msg='';a.busy=true;pinta();
-    const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+    if(EN_APP){
+      try{await entraConGoogleNativo();a.busy=false;pinta()}
+      catch(e){a.busy=false;if(!googleCancelado(e)){console.warn('google',e);a.err=errorCuenta(e)}pinta()}
+      return}
+    const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:redirigeA()}});
     if(error){a.busy=false;a.err=errorCuenta(error);pinta()}},
   async apple(){
     const a=ACCESO;a.err='';a.msg='';a.busy=true;pinta();
-    const {error}=await SB.auth.signInWithOAuth({provider:'apple',options:{redirectTo:location.origin+location.pathname}});
+    if(EN_APP){ /* app nativa: el sistema da el token de Apple y Supabase lo valida (no hay redirección ni secret de 6 meses) */
+      try{await entraConAppleNativo();a.busy=false;pinta()}
+      catch(e){a.busy=false;if(!appleCancelado(e)){console.warn('apple',e);a.err=errorCuenta(e)}pinta()}
+      return}
+    const {error}=await SB.auth.signInWithOAuth({provider:'apple',options:{redirectTo:redirigeA()}});
     if(error){a.busy=false;a.err=errorCuenta(error);pinta()}},
   async entrarCuenta(){
     const a=ACCESO;a.err='';a.msg='';if(!a.email||!a.pw){a.err='Escribe el correo y la contraseña.';return}
@@ -3304,14 +3423,14 @@ const ACT={
     const a=ACCESO;a.err='';a.msg='';if(!a.email||!a.pw){a.err='Escribe el correo y una contraseña.';return}
     if(a.pw.length<8){a.err='La contraseña tiene que tener al menos 8 caracteres.';return}
     a.busy=true;pinta();
-    const {data,error}=await SB.auth.signUp({email:a.email.trim(),password:a.pw,options:{emailRedirectTo:location.origin+location.pathname}});
+    const {data,error}=await SB.auth.signUp({email:a.email.trim(),password:a.pw,options:{emailRedirectTo:redirigeA()}});
     if(error){a.busy=false;a.err=errorCuenta(error)}
     else if(!data.session){a.busy=false;a.msg='Cuenta creada. Te hemos mandado un correo para confirmarla; ábrelo y vuelve aquí para entrar.';a.modo='entrar';a.pw=''}
     else VISTA='portada';
     pinta()},
   async olvido(){
     const a=ACCESO;a.err='';a.msg='';if(!a.email){a.err='Escribe primero tu correo.';return}
-    a.busy=true;pinta();const {error}=await SB.auth.resetPasswordForEmail(a.email.trim(),{redirectTo:location.origin+location.pathname});
+    a.busy=true;pinta();const {error}=await SB.auth.resetPasswordForEmail(a.email.trim(),{redirectTo:redirigeA()});
     a.busy=false;if(error)a.err=errorCuenta(error);else a.msg='Si hay una cuenta con ese correo, te llegará un enlace para poner una contraseña nueva.';pinta()},
   async nuevaClave(){
     const pw=(($('#pw')||{}).value||'');ACCESO.err='';if(pw.length<8){ACCESO.err='Mínimo 8 caracteres.';return}
@@ -3348,15 +3467,14 @@ const ACT={
     if(n===base.name&&JSON.stringify(limpiaLook(EDIT.look))===JSON.stringify(base.look))return ACT.editorSalirOk();
     abrirSheet(`<h2>¿Salir sin guardar los cambios?</h2><p class="tenue">Se perderán los cambios que has hecho en tu personaje.</p><button class="b-alarma b-ancho" data-a="editorSalirOk">Salir sin guardar</button><p><button class="b-link" data-a="cerrarSheet">Seguir editando</button></p>`);
   },
-  editorSalirOk(){cerrarSheet();if(!PERFIL){PORT_VOL=!!(CUENTAS&&USER);return ACT.aPortada()}return ACT.aMenu()}, /* con sesión iniciada vuelve a la portada sin cerrarla (PORT_VOL deja ver la portada aunque aún no haya personaje) */
+  editorSalirOk(){cerrarSheet();if(!PERFIL){if(CUENTAS&&INVITADO&&!USER)return ACT.aAcceso();PORT_VOL=!!(CUENTAS&&USER);return ACT.aPortada()}return ACT.aMenu()}, /* con sesión iniciada vuelve a la portada sin cerrarla (PORT_VOL deja ver la portada aunque aún no haya personaje) */
   aPortada(){VISTA='portada';EDIT=null;scrollTo(0,0)},
   aMenu(){VISTA='menu';EDIT=null;scrollTo(0,0)},
   editar(){VISTA='editor';EDIT=null;scrollTo(0,0)},
   look(d){if(!EDIT)return;const i=$('#nom');if(i)EDIT.name=i.value;EDIT.look[d.k]=+d.v;PJ.giraA('editor',d.k==='pack'?Math.PI:null);$('#app')._h=''},
   async guardarPerfil(){const n=(($('#nom')||{}).value||'').trim().slice(0,16);if(!n){toast('Escribe un nombre de jugador');$('#nom').focus();return}
     const look=limpiaLook(EDIT.look);
-    if(CUENTAS){
-      if(!USER)return;
+    if(CUENTAS&&USER){
       GUARDANDO=true;pinta();
       const {error}=await SB.from('profiles').upsert({id:USER.id,username:n,look,updated_at:new Date().toISOString()});
       GUARDANDO=false;
@@ -3447,20 +3565,20 @@ const ACT={
   botQuita(){botsQuita()},
   prRol(d){if(enPruebas())accion('pruebas',{rol:d.v})},
   prVel(d){if(enPruebas())accion('pruebas',{vel:d.v})},
-  atajos(){if(!enPruebas())return;ATJ='menu';abrirSheet('<div id="shVivo"></div>',{refresh:vAtajos});setHTML($('#shVivo'),vAtajos())},
+  atajos(){if(!enAtajos())return;ATJ='menu';abrirSheet('<div id="shVivo"></div>',{refresh:vAtajos});setHTML($('#shVivo'),vAtajos())},
   atajoVolver(){ATJ='menu'},
-  atajoReunion(){if(enPruebas()&&S.phase==='play'){accion('atajo',{k:'reunion'});cerrarSheet()}},
-  atajoDebate(){if(enPruebas())accion('atajo',{k:'debate'})},
-  atajoVotar(){if(enPruebas())atajoVotar()},
-  atajoMata(d){if(enPruebas())atajoMata(d.p)},
-  atajoSab(d){if(!enPruebas())return;if(d.k==='door'){ATJ='puerta';return}atajoSab(d.k)},
-  atajoPuertaA(d){if(enPruebas()){atajoSab('door',d.r);ATJ='menu'}},
-  atajoTareas(){if(enPruebas())atajoTareas()}
+  atajoReunion(){if(enAtajos()&&S.phase==='play'){accion('atajo',{k:'reunion'});cerrarSheet()}},
+  atajoDebate(){if(enAtajos())accion('atajo',{k:'debate'})},
+  atajoVotar(){if(enAtajos())atajoVotar()},
+  atajoMata(d){if(enAtajos())atajoMata(d.p)},
+  atajoSab(d){if(!enAtajos())return;if(d.k==='door'){ATJ='puerta';return}atajoSab(d.k)},
+  atajoPuertaA(d){if(enAtajos()){atajoSab('door',d.r);ATJ='menu'}},
+  atajoTareas(){if(enAtajos())atajoTareas()}
 };
 /* Pulsación visible: al tocar un botón se le pone .pulsado (iOS no siempre aplica :active en táctil) y se mantiene al menos 120 ms.
    En los botones que cambian de pantalla se espera hasta que el estado oscuro lleve ~100 ms visible antes de navegar. */
 const SIN_EFECTO=/(^|\s)(b-google|b-apple|b-link|chip|tog|sh-cerrar|g-[\w-]+)(\s|$)/;
-const NAVEGA=new Set(['jugar','crear','unirme','aMenu','aPortada','editar','guardarPerfil','salir','salirCuenta','volver','entendido','empezar','aLobby','galeria','galeriaAbre','galeriaOtra','galeriaLarga','entrarCuenta','crearCuenta','olvido','nuevaClave','aBorrarCuenta','confirmarBorrado','reintentarCuentas','soy','menu','irSala','tarea','reportar','emergencia','volverMenu','volverSala','salaVolver','cerrarSheet']);
+const NAVEGA=new Set(['invitado','aAcceso','jugar','crear','unirme','aMenu','aPortada','editar','guardarPerfil','salir','salirCuenta','volver','entendido','empezar','aLobby','galeria','galeriaAbre','galeriaOtra','galeriaLarga','entrarCuenta','crearCuenta','olvido','nuevaClave','aBorrarCuenta','confirmarBorrado','reintentarCuentas','soy','menu','irSala','tarea','reportar','emergencia','volverMenu','volverSala','salaVolver','cerrarSheet']);
 const pulsable=b=>b&&!b.disabled&&!SIN_EFECTO.test(b.className)&&!b.closest('.paso .ctl,.pestanas,#wkCerrar,.wk-cab');
 function pulsa(e){
   const b=e.target.closest&&e.target.closest('button');if(!pulsable(b))return;
@@ -3518,7 +3636,20 @@ document.addEventListener('pointerdown',()=>{WK.ctx()});
 
 WK.init();
 if(LS.get('imp.micok'))$('#wkMicNota').hidden=true;
-{const f=document.createElement('button');f.id='prFab';f.hidden=true;f.textContent='⚡ Atajos';f.dataset.a='atajos';document.body.appendChild(f)} /* oculto salvo en cuentas con bots (enPruebas) */
+{const f=document.createElement('button');f.id='prFab';f.hidden=true;f.textContent='⚡ Atajos';f.dataset.a='atajos';document.body.appendChild(f)} /* oculto salvo en cuentas con puede_bots (enAtajos) */
+/* Universal Links: el enlace y el QR de una partida (https://puntostudio.es/punto-ciego/?c=CÓDIGO) abren la app si está instalada (apple-app-site-association en
+   puntostudio.es + entitlement applinks). @capacitor/app avisa con appUrlOpen, también si la app estaba cerrada (el aviso se retiene hasta que hay oyente). */
+function abreEnlace(url){
+  let u;try{u=new URL(url)}catch(e){return}
+  if(u.hostname!=='puntostudio.es'||!/^\/punto-ciego\/(?!beta\/)/.test(u.pathname))return;
+  const c=(u.searchParams.get('c')||'').toUpperCase();if(c.length!==5||/[^A-Z0-9]/.test(c))return;
+  if(ME&&ME.code){if(ME.code!==c)toast('Ya estás en una partida: sal de ella para unirte a la '+c);return}
+  PEND_ENTRAR=c;LS.set('pc.invita',{c,t:Date.now()});
+  if(PERFIL&&(USER||INVITADO)){PEND_ENTRAR=null;LS.del('pc.invita');entrar(c,PERFIL.name,false);return}
+  if(USER&&!PERFIL&&!PERFIL_CARGANDO)VISTA='editor'; /* con sesión y sin personaje: lo crea y al guardar entra (PEND_ENTRAR); sin sesión sale el acceso con el aviso de invitación */
+  pinta();
+}
+if(EN_APP)try{Promise.resolve(plugin('App').addListener('appUrlOpen',e=>abreEnlace(e&&e.url))).catch(x=>console.warn('appUrlOpen',x))}catch(x){console.warn('appUrlOpen',x)}
 (function arranque(){
   const q=(new URLSearchParams(location.search).get('c')||'').toUpperCase();
   const ult=LS.get('imp.ultima');
@@ -3526,6 +3657,7 @@ if(LS.get('imp.micok'))$('#wkMicNota').hidden=true;
     const vuelta=/access_token|refresh_token|[?&#]code=|type=(signup|recovery|magiclink|invite|email)|error_description/.test(location.hash+location.search);
     if(q.length===5){PEND_ENTRAR=q;LS.set('pc.invita',{c:q,t:Date.now()})}
     else if(vuelta){const g=LS.get('pc.invita');if(g&&g.c&&Date.now()-g.t<3600000)PEND_ENTRAR=g.c}
+    if(INVITADO&&PERFIL&&PEND_ENTRAR){const c=PEND_ENTRAR;PEND_ENTRAR=null;LS.del('pc.invita');pinta();iniciaCuentas();entrar(c,PERFIL.name,false);return}
     pinta();iniciaCuentas();return}
   if(q&&q===ult&&PERFIL){entrar(q,PERFIL.name,false);return}
   pinta();
@@ -3543,6 +3675,6 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   }).catch(()=>{});
 });
 </script>
-<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v32</div>
+<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v35</div>
 </body>
 </html>
