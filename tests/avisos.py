@@ -7,6 +7,7 @@ RAIZ=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATOS=os.path.join(tempfile.mkdtemp(),'mock.json')
 B='http://localhost:8392/?supa=http://localhost:9999&supakey=local'
 fallos=[]
+BETA=os.environ.get('PUNTO_WEB')=='beta'
 def ok(c,m):
     print(('OK   ' if c else 'FALLA ')+m)
     if not c: fallos.append(m)
@@ -24,11 +25,25 @@ BUCLE="""()=>{
    else if(S.meet.fase==='vote'&&!(me.id in S.meet.votes)){const o=S.players.filter(x=>!x.dead&&x.id!==me.id);accion('vote',{target:o[0].id})}
  }
  return S.phase}"""
+def AJUSTES_PARTIDA(p):
+    # ⚙ dentro de la partida: mismo botón para todos, sin Tema, efecto inmediato
+    ok(p.locator('.aj-juego').count()==1,'ajustes en la pantalla de juego')
+    p.click('.aj-juego'); p.wait_for_selector('[data-a=ajSonido]')
+    ok(p.locator('[data-a=ajTema]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'en partida: solo Sonido y Vibración')
+    p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==False and p.evaluate("LS.get('pc.vibra',1)")==0,'vibración apagada al instante y guardada')
+    p.evaluate("window.__vib=[];avisa('fin')"); ok(p.evaluate("window.__vib")==[],'apagada: no vibra')
+    p.click('[data-a=ajVibra]'); p.click('[data-a=ajSonido]'); ok(p.evaluate("SET.sound")==False,'sonido apagado al instante'); p.click('[data-a=ajSonido]')
+    p.click('#shPie [data-a=cerrarSheet]'); p.evaluate("window.__vib=[]")
 try:
     with sync_playwright() as pw:
         br=pw.chromium.launch(channel='msedge')
         ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); ctx.add_init_script(INIT); p=ctx.new_page(); errs=[]; p.on('pageerror',lambda e:errs.append(str(e)))
-        p.goto(B); p.wait_for_selector('[data-a=invitado]'); p.click('[data-a=invitado]'); p.wait_for_selector('[data-a=jugar]')
+        p.goto(B)
+        if os.environ.get('PUNTO_WEB')=='beta': # beta no tiene invitado: cuenta nueva contra el mock
+            p.wait_for_selector('[data-a=entrarCuenta]'); p.click('[data-a=modoAcceso][data-m=crear]'); p.fill('#em','av%d@ejemplo.com'%int(time.time()*1000)); p.fill('#pw','clave1234'); p.click('[data-a=crearCuenta]')
+            p.wait_for_selector('#nom'); p.fill('#nom','Avisos'); p.wait_for_timeout(600); p.click('[data-a=guardarPerfil]'); p.wait_for_selector('[data-a=crear]'); p.reload()
+        else: p.wait_for_selector('[data-a=invitado]'); p.click('[data-a=invitado]')
+        p.wait_for_selector('[data-a=jugar]')
         # ajustes
         ok(p.evaluate("document.documentElement.getAttribute('data-theme')")=='dark','tema oscuro por defecto')
         p.click('[data-a=ajustes]'); p.wait_for_selector('[data-a=ajTema]')
@@ -39,12 +54,18 @@ try:
         p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==False,'vibración apagada'); p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==True,'vibración encendida')
         p.click('[data-a=ajSonido]'); p.reload(); p.wait_for_selector('[data-a=jugar]'); ok(p.evaluate("SET.sound")==False,'el ajuste de sonido se guarda'); p.evaluate("setAjuste('sound',true)")
         # sala: walkie desactivado por defecto
-        p.click('[data-a=jugar]'); p.wait_for_selector('#nom'); p.fill('#nom','Avisos'); p.wait_for_timeout(600); p.click('[data-a=guardarPerfil]'); p.wait_for_selector('[data-a=crear]')
-        p.click('[data-a=crear]'); p.wait_for_selector('[data-a=botMas3]'); p.click('[data-a=botMas3]'); p.wait_for_timeout(400)
+        p.click('[data-a=jugar]')
+        if os.environ.get('PUNTO_WEB')!='beta': p.wait_for_selector('#nom'); p.fill('#nom','Avisos'); p.wait_for_timeout(600); p.click('[data-a=guardarPerfil]')
+        p.wait_for_selector('[data-a=crear]')
+        p.click('[data-a=crear]'); p.wait_for_selector('.tog[data-k=walkie]') if BETA else (p.wait_for_selector('[data-a=botMas3]'), p.click('[data-a=botMas3]')); p.wait_for_timeout(400)
         ok(p.evaluate("S.cfg.walkie")==False,'walkie desactivado por defecto al crear partida')
         ok(p.evaluate("document.querySelector('#wkFab').hidden")==True,'sin botón de walkie con el walkie desactivado')
         p.click('.tog[data-k=walkie]'); p.wait_for_timeout(300); ok(p.evaluate("S.cfg.walkie")==True,'el anfitrión puede activarlo')
         p.click('.tog[data-k=walkie]'); p.wait_for_timeout(300)
+        if BETA: # beta no tiene bots para cuentas normales: se fuerza la fase de juego en local y solo se prueba el ⚙ de la partida
+            p.evaluate("LS.set('imp.rol.'+S.gid,1);S.phase='play';S.players.forEach(x=>{x.role=x.role||'ciego';x.tasks=x.tasks||[]});pinta()"); p.wait_for_timeout(300)
+            AJUSTES_PARTIDA(p)
+            print('FALLOS:',len(fallos)); br.close(); srv.shutdown(); pr.terminate(); sys.exit(1 if fallos else 0)
         # partida: el anfitrión es Punto y mata; solo vibran los avisos
         p.evaluate("accion('pruebas',{rol:'imp',vel:'rapida'})"); p.evaluate("accion('cfg',{cfg:{killCd:10,disc:0,vote:15,tasks:2,largas:0,emerg:1}})")
         p.evaluate("window.__vib=[]")
@@ -53,6 +74,8 @@ try:
         p.wait_for_selector('[data-hold=papel]'); box=p.locator('[data-hold=papel]').bounding_box()
         p.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2); p.mouse.down(); p.wait_for_timeout(300); p.mouse.up()
         ok(len(p.evaluate("window.__vib"))==1,'ver el papel no vibra')
+        p.wait_for_selector('[data-a=entendido]'); p.click('[data-a=entendido]'); p.wait_for_timeout(500)
+        AJUSTES_PARTIDA(p)
         t0=time.time(); fase='play'
         while time.time()-t0<240:
             fase=p.evaluate(BUCLE)

@@ -149,6 +149,9 @@ ul.gente em{font-style:normal;color:var(--niebla);font-size:13.5px}
 .barra-t{margin:4px 0 14px}
 .bt-cab{display:flex;justify-content:space-between;font-size:14px;color:var(--niebla)}
 .bt-cab b{color:var(--tiza);font-family:var(--disp);font-size:18px}
+.bt-cab{align-items:center}
+.bt-cab .bt-r{display:flex;align-items:center;gap:4px}
+.aj-juego{width:36px;height:36px;margin:-6px -8px -6px 0;padding:0;border:0;background:none;color:var(--niebla);font-size:20px;line-height:1;opacity:.7}
 .bt{height:12px;background:var(--casco);border:1px solid var(--remache);border-radius:3px;overflow:hidden;margin-top:4px}
 .bt i{display:block;height:100%;background:var(--ok);transition:width .6s ease}
 .rol-b{display:block;width:100%;text-align:left;background:var(--casco);font-weight:500;color:var(--niebla)}
@@ -1807,10 +1810,12 @@ function vPortada(){
   <p class="legal">${enlaceLegal('privacidad','Privacidad')} · ${enlaceLegal('terminos','Términos')} · ${enlaceLegal('soporte','Soporte')}</p></section>`;
 }
 /* Ajustes (⚙ de la portada): tema, sonido y vibración. Se guardan en este móvil. */
+const enPartida=()=>!!(S&&mine()&&(S.phase==='play'||S.phase==='meeting'));
 function ajustesSheet(){
   const fila=(a,t,k)=>`<div class="paso"><span>${t}</span><button class="tog ${SET[k]?'on':''}" data-a="${a}" role="switch" aria-checked="${SET[k]}" aria-label="${t}">${SET[k]?'Sí':'No'}</button></div>`;
-  abrirSheet(`<h2>Ajustes</h2><p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
-    <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>
+  const tema=enPartida()?'':`<p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
+    <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>`;
+  abrirSheet(`<h2>Ajustes</h2>${tema}
     ${fila('ajSonido','Sonido','sound')}${puedeVibrar()?fila('ajVibra','Vibración','vibra'):''}
     <p class="tenue" style="margin-top:10px">Solo suenan y vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes, fin de la votación y fin de la partida.</p>`);
 }
@@ -2035,7 +2040,7 @@ function vAlertas(p){
 }
 function vJuego(){
   const p=mine();const {hechas,total}=progreso(S);const pct=total?Math.round(hechas/total*100):0;
-  let h=`<section class="barra-t"><div class="bt-cab"><span>Tareas de los Ciegos</span><b>${pct}%</b></div><div class="bt"><i style="width:${pct}%"></i></div></section>`;
+  let h=`<section class="barra-t"><div class="bt-cab"><span>Tareas de los Ciegos</span><span class="bt-r"><b>${pct}%</b><button class="aj-juego" data-a="ajustes" aria-label="Ajustes">&#9881;&#xFE0E;</button></span></div><div class="bt"><i style="width:${pct}%"></i></div></section>`;
   h+=vRol(p);
   if(p.dead&&!p.body)h+=`<p class="fantasma">${vivo('fantasma',{look:p.look,hood:p.color,anim:'fantasma',k:S.gid+'-'+p.id,w:54,h:78,ph:'espalda',alt:'Tu fantasma'})}<span>${p.ejected?'Te han expulsado. ':''}Eres un fantasma. ${p.role==='imp'?'Aún puedes sabotear.':'Sigue haciendo tareas: cuentan para los Ciegos.'} En las reuniones no puedes hablar ni votar.</span></p>`;
   h+=vAlertas(p);
