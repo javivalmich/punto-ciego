@@ -26,8 +26,8 @@ BUCLE="""()=>{
  return S.phase}"""
 def AJUSTES_PARTIDA(p):
     # ⚙ dentro de la partida: mismo botón para todos, sin Tema, efecto inmediato
-    ok(p.locator('.aj-juego').count()==1,'ajustes en la pantalla de juego')
-    p.click('.aj-juego'); p.wait_for_selector('[data-a=ajSonido]')
+    ok(p.locator('#ajFab').count()==1,'ajustes en la pantalla de juego')
+    p.click('#ajFab'); p.wait_for_selector('[data-a=ajSonido]')
     ok(p.locator('[data-a=ajTema]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'en partida: solo Sonido y Vibración')
     p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==False and p.evaluate("LS.get('pc.vibra',1)")==0,'vibración apagada al instante y guardada')
     p.evaluate("window.__vib=[];avisa('fin')"); ok(p.evaluate("window.__vib")==[],'apagada: no vibra')

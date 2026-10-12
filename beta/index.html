@@ -87,7 +87,7 @@ img[data-pend]{visibility:hidden}
 .fila input{flex:1;min-width:0}
 
 #top{position:sticky;top:0;padding-top:env(safe-area-inset-top,0px);z-index:9;background:var(--acero);border-bottom:1px solid var(--remache)}
-.tb{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 16px;min-height:52px}
+.tb{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 60px 10px 16px;min-height:52px} /* a la derecha queda el ⚙ fijo (#ajFab) */
 .marca{font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:.06em;display:flex;align-items:center;gap:1px}
 .marca i{display:inline-block;width:13px;height:13px;border-radius:50%;border:2.5px solid var(--tiza);margin:0 5px 0 1px;position:relative}
 .marca i::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--baliza)}
@@ -147,9 +147,6 @@ ul.gente em{font-style:normal;color:var(--niebla);font-size:13.5px}
 .barra-t{margin:4px 0 14px}
 .bt-cab{display:flex;justify-content:space-between;font-size:14px;color:var(--niebla)}
 .bt-cab b{color:var(--tiza);font-family:var(--disp);font-size:18px}
-.bt-cab{align-items:center}
-.bt-cab .bt-r{display:flex;align-items:center;gap:4px}
-.aj-juego{width:36px;height:36px;margin:-6px -8px -6px 0;padding:0;border:0;background:none;color:var(--niebla);font-size:20px;line-height:1;opacity:.7}
 .bt{height:12px;background:var(--casco);border:1px solid var(--remache);border-radius:3px;overflow:hidden;margin-top:4px}
 .bt i{display:block;height:100%;background:var(--ok);transition:width .6s ease}
 .rol-b{display:block;width:100%;text-align:left;background:var(--casco);font-weight:500;color:var(--niebla)}
@@ -467,7 +464,10 @@ button.pulsado.b-alarma:not([disabled]),button.pulsado.b-jugar:not([disabled]){f
 .b-baliza[disabled],.b-alarma[disabled],.b-jugar[disabled],.b-sec[disabled],#bar .barra button[disabled],button[data-a="unirme"][disabled]{box-shadow:none}
 */
 .portada{position:relative}
-.aj-btn{position:absolute;top:0;right:0;width:44px;height:44px;padding:0;border:0;background:none;color:var(--niebla);font-size:26px;line-height:1}
+/* ⚙ de Ajustes: UN solo botón, fijo y en el mismo sitio en todas las pantallas (arriba a la derecha, en la zona segura). Por encima de las pantallas completas
+   (z 40) y debajo de las hojas (50): nunca tapa botones de la partida (están abajo o a la izquierda) y la cabecera le deja sitio (.tb). */
+#ajFab{position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);right:calc(env(safe-area-inset-right,0px) + 6px);z-index:45;width:44px;height:44px;padding:0;min-height:0;border-radius:50%;border:1px solid var(--remache);background:var(--acero);color:var(--niebla);font-size:24px;line-height:1;box-shadow:none;opacity:.85}
+#ajFab:active{opacity:1}
 :root[data-theme=light]{--acero:#F3EEE6;--casco:#E9E3D8;--chapa:#DED7CA;--remache:#C3BBAD;--tiza:#161618;--niebla:#5C5850;--baliza:#C71F15;--alarma:#C71F15;--sonar:#2C6A83;--ok:#2E7D4A}
 :root[data-theme=light] .tog.on{color:#fff}
 :root[data-theme=light] .portada .logo{mix-blend-mode:multiply;filter:invert(1) hue-rotate(180deg) brightness(1.12)}
@@ -480,6 +480,7 @@ button.pulsado.b-alarma:not([disabled]),button.pulsado.b-jugar:not([disabled]){f
 <header id="top"></header>
 <main id="app"></main>
 <nav id="bar" hidden></nav>
+<button id="ajFab" data-a="ajustes" aria-label="Ajustes">&#9881;&#xFE0E;</button>
 <div id="over" hidden></div>
 <div id="sheet" hidden><div class="sh-fondo" data-a="cerrarSheet"></div><div class="sh-caja"><button class="sh-cerrar" data-a="cerrarSheet" aria-label="Cerrar">✕</button><div id="shBody"></div><div class="sh-pie" id="shPie"></div></div></div>
 <button id="wkFab" hidden aria-label="Walkie">📻<b id="wkBadge" hidden>0</b></button>
@@ -1083,7 +1084,7 @@ function mira(){ /* retícula del logo: tres cuartos claros y uno rojo */
   const R=92,c=105,arc=(a0,a1,col)=>{const r=a=>(a-90)*Math.PI/180,x=a=>c+R*Math.cos(r(a)),y=a=>c+R*Math.sin(r(a));return `<path d="M${x(a0)} ${y(a0)} A${R} ${R} 0 0 1 ${x(a1)} ${y(a1)}" stroke="${col}" stroke-width="9" fill="none"/>`};
   return `<svg class="mira" viewBox="0 0 210 210" aria-hidden="true">${arc(8,82,'#FF4637')}${arc(98,172,'#FF4637')}${arc(188,262,'#F3EEE6')}${arc(278,352,'#F3EEE6')}<path d="M105 0v22M105 188v22M0 105h22M188 105h22" stroke="#F3EEE6" stroke-width="7"/></svg>`;
 }
-const nombreDe=id=>{const p=S&&P(S,id);return p?p.name:'Alguien'};
+const nombreDe=id=>{const p=S&&P(S,id);return p?p.name:(S&&S.salidos&&S.salidos[id]?S.salidos[id].name:'Alguien')};
 /* ============ bloquear y reportar jugadores: sin moderación ni servidor, solo en este móvil ============ */
 const SUPPORT_MAIL='soporte@puntostudio.es';
 const BLK={
@@ -1135,7 +1136,7 @@ function limpiaCfg(c,old){
 }
 /* versión del protocolo de partida: súbela cuando un cambio haga que dos versiones no puedan jugar juntas.
    Todo móvil con otra versión que la de la partida se bloquea con un aviso para recargar (ver bloqueo()) */
-const APP_V=2;
+const APP_V=3; /* 3: los jugadores pueden salir a mitad de partida (leave en play/meeting, st.salidos, st.aviso) */
 function nuevaPartida(hostId,name,look){
   const now=ahora();look=limpiaLook(look);
   return {v:1,app:APP_V,hb:now,hostId,gid:uid(6),phase:'lobby',cfg:cfgDefecto('piso'),players:[{id:hostId,name,color:look.hood,look,seen:now}],
@@ -1254,11 +1255,11 @@ function ajustaPapel(st,orden){
   if(st.pr.rol==='imp'&&!dentro)orden[Math.floor(Math.random()*orden.length)]=h;
   else if(st.pr.rol==='crew'&&dentro){const o=barajar(st.players.filter(x=>x.id!==h&&!orden.includes(x.id)).map(x=>x.id));if(o.length)orden[orden.indexOf(h)]=o[0]}
 }
-function ganador(st,now){
-  if(st.phase!=='play')return false;
+function ganador(st,now,salida){ /* salida: alguien ha salido de la partida (también cuenta durante una reunión) */
+  if(st.phase!=='play'&&!(salida&&st.phase==='meeting'))return false;
   const vivos=st.players.filter(p=>!p.dead),imps=vivos.filter(p=>p.role==='imp').length,crew=vivos.length-imps;
   let w=null,why='';
-  if(imps===0){w='crew';why='Todos los Puntos han sido expulsados'}
+  if(imps===0){w='crew';why=salida?'El último Punto ha salido de la partida':'Todos los Puntos han sido expulsados'}
   else if(imps>=crew){w='imp';why='Los Puntos ya son tantos como los Ciegos'}
   else{const {hechas,total}=progreso(st);if(total&&hechas>=total){w='crew';why='Los Ciegos han terminado todas las tareas'}}
   if(w){st.phase='end';st.end={w,why,t:now};st.sab=null;st.locks=[];return true}
@@ -1270,7 +1271,7 @@ function reunion(st,now,by,body){
   st.players.forEach(p=>{p.body=false});st.sab=null;st.locks=[];
   st.log.push({t:now,txt:body?`${nombreDe2(st,by)} encontró el cuerpo de ${nombreDe2(st,body)}`:`${nombreDe2(st,by)} convocó una reunión`});
 }
-const nombreDe2=(st,id)=>{const p=P(st,id);return p?p.name:'?'};
+const nombreDe2=(st,id)=>{const p=P(st,id);return p?p.name:(st.salidos&&st.salidos[id]?st.salidos[id].name:'?')};
 /* Saltar el debate: los vivos marcan «Listo para votar» (si lo hacen todos se pasa a votar) o el anfitrión pasa a votar cuando quiere */
 const todosListos=st=>{const m=st.meet,v=st.players.filter(x=>!x.dead);return !!(m&&m.listos&&v.length&&v.every(x=>m.listos[x.id]))};
 function pasaAVotar(st,now,por){
@@ -1284,6 +1285,34 @@ function resolver(st,now){
   m.fase='res';m.until=now+9000;m.res={out,empate:top.length>1,cuenta,imp:false,quedan:0};
   if(out){const p=P(st,out);if(p){p.dead=true;p.ejected=true;p.body=false;m.res.imp=p.role==='imp';st.log.push({t:now,txt:`Expulsado: ${p.name}${p.role==='imp'?' (Punto)':''}`})}}
   m.res.quedan=st.players.filter(x=>!x.dead&&x.role==='imp').length;
+}
+/* Salir de la partida a mitad de juego (play o reunión): el jugador deja de existir para la partida, como eliminado, pero NO como muerto: no hay cuerpo ni fantasma.
+   Sus tareas salen del total (progreso solo cuenta a los jugadores que siguen), su voto desaparece y los votos que recibió pasan a «saltar».
+   Los demás solo ven que ha salido, nunca su papel (queda en st.salidos y solo se enseña en la pantalla final). Si era el anfitrión, el mando pasa al jugador
+   conectado más reciente. Después se mira si la salida acaba la partida (último Punto fuera, o los Puntos igualan a los Ciegos vivos) o hace avanzar la reunión. */
+function salidaPartida(st,p,now){
+  const m=st.meet;
+  (st.salidos||(st.salidos={}))[p.id]={name:p.name,look:p.look,color:p.color,role:p.role,t:now};
+  st.players=st.players.filter(x=>x!==p);
+  if(st.racha)delete st.racha[p.id];
+  if(st.sab&&st.sab.fix)for(const k of Object.keys(st.sab.fix))if(st.sab.fix[k]&&st.sab.fix[k].pid===p.id)delete st.sab.fix[k];
+  if(p.id===st.hostId){
+    const c=st.players.filter(x=>!x.bot).sort((a,b)=>(b.seen||0)-(a.seen||0));
+    if(c.length)st.hostId=c[0].id;
+  }
+  st.log.push({t:now,txt:`${p.name} salió de la partida`});
+  st.aviso={n:(st.aviso?st.aviso.n:0)+1,t:now,txt:`${p.name} ha salido de la partida`};
+  if(m){
+    delete m.votes[p.id];
+    for(const k of Object.keys(m.votes))if(m.votes[k]===p.id)m.votes[k]='skip';
+    if(m.listos)delete m.listos[p.id];
+  }
+  if(ganador(st,now,true))return;
+  if(st.phase==='meeting'&&m){
+    const vivos=st.players.filter(x=>!x.dead);
+    if(m.fase==='disc'&&todosListos(st))pasaAVotar(st,now,'todos');
+    else if(m.fase==='vote'&&vivos.length&&vivos.every(x=>x.id in m.votes))resolver(st,now);
+  }
 }
 /* local: la acción la ha generado este mismo navegador (el anfitrión o sus bots); las que llegan por la red nunca lo son */
 function reducir(st,a,now,local){
@@ -1305,7 +1334,9 @@ function reducir(st,a,now,local){
     st.players.push({id:a.pid,name:nombre,color:c,look,seen:now,...(bot?{bot:true}:{})});return true;
   }
   case 'leave':
-    if(st.phase!=='lobby'||!p)return true;
+    if(!p)return true;
+    if(st.phase==='play'||st.phase==='meeting'){salidaPartida(st,p,now);return true}
+    if(st.phase!=='lobby')return true;
     st.players=st.players.filter(x=>x!==p);if(esHost&&st.players.length)st.hostId=(st.players.find(x=>!x.bot)||st.players[0]).id;
     if(st.racha)delete st.racha[p.id];return true;
   case 'kick':if(esHost&&st.phase==='lobby'&&a.target!==st.hostId){st.players=st.players.filter(x=>x.id!==a.target);if(st.racha)delete st.racha[a.target]}return true;
@@ -1670,7 +1701,7 @@ function mejor(st,cur){
   return st.v===cur.v&&st.hostId===cur.hostId&&st.hb>cur.hb;
 }
 function recibeEstado(st){
-  if(!st||!Array.isArray(st.players))return;
+  if(!ME.code||!st||!Array.isArray(st.players))return; /* sin código ya has salido: el eco de tu propia salida no te devuelve a la partida */
   if(!mejor(st,S))return;
   if(st.app!==APP_V){ /* partida de otra versión (o anterior a este control): no se adopta, se bloquea hasta recargar */
     if(st.hostId===ME.pid)return;
@@ -1760,7 +1791,7 @@ const VIB={cadaver:[600,200,600,200,600],reunion:[300,120,300,120,300],sabotaje:
 function avisa(k){if(SET.sound)try{SON[k]()}catch(e){}vibraAviso(VIB[k])}
 function eventos(){
   if(!S||!ME.pid)return;const p=mine(),pr=PREV;
-  PREV={phase:S.phase,mn:S.meet?S.meet.n:0,mf:S.meet?S.meet.fase:'',sab:S.sab?S.sab.kind+S.sab.rooms.join():'',dead:!!(p&&p.dead),gid:S.gid,notice:S.notice?S.notice.t:0};
+  PREV={phase:S.phase,mn:S.meet?S.meet.n:0,mf:S.meet?S.meet.fase:'',sab:S.sab?S.sab.kind+S.sab.rooms.join():'',dead:!!(p&&p.dead),gid:S.gid,notice:S.notice?S.notice.t:0,av:S.aviso?S.aviso.n:0};
   if(pr&&pr.gid!==S.gid){ /* partida nueva: nada del estado local de la anterior sigue vivo */
     OPT.clear();REVELA=false;VISTO=false;ROLVER=false;cerrarSheet();
     for(const [id,q] of PEND)if(q.a.t!=='join')PEND.delete(id);   /* reenvíos pendientes de la partida anterior (el join sí se conserva) */
@@ -1775,6 +1806,7 @@ function eventos(){
   if(p&&PREV.dead&&!pr.dead&&S.phase==='play')cerrarSheet();
   if(S.phase==='end'&&pr.phase!=='end'){avisa('fin');cerrarSheet();sumarPartida()}   /* termina la partida: igual para todos */
   if(S.notice&&S.notice.pid===ME.pid&&PREV.notice!==pr.notice)toast(S.notice.txt);
+  if(S.aviso&&PREV.av!==pr.av&&ahora()-S.aviso.t<8000)toast(S.aviso.txt);   /* «X ha salido de la partida»: igual para todos, sin papel */
 }
 let WL=null;
 async function despierto(){try{if('wakeLock' in navigator&&document.visibilityState==='visible'&&!WL){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}}catch(e){}}
@@ -1804,19 +1836,18 @@ let VISTA='portada',PORT_VOL=false,EDIT=null,REGLAS_ABIERTAS=false;
 const reglasHTML=()=>`<details class="reglas"${REGLAS_ABIERTAS?' open':''}><summary>Cómo se juega</summary>${REGLAS}</details>`;
 document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('details.reglas'))REGLAS_ABIERTAS=e.target.open},true);
 function vPortada(){
-  return `<section class="portada"><button class="aj-btn" data-a="ajustes" aria-label="Ajustes">&#9881;&#xFE0E;</button><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
+  return `<section class="portada"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
   <ul class="rasgos"><li><b>Tareas</b>en salas de verdad de tu casa</li><li><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li><b>Un traidor</b>que nadie ha visto venir</li><li><b>Walkie</b>para hablar entre móviles</li></ul>
   <button class="b-jugar" data-a="jugar">Jugar</button>
   ${CUENTAS&&INVITADO&&!USER?`<p style="text-align:center"><button class="b-link" data-a="aAcceso">Crear cuenta o entrar</button></p>`:''}
   ${reglasHTML()}
   <p class="legal">${enlaceLegal('privacidad','Privacidad')} · ${enlaceLegal('terminos','Términos')} · ${enlaceLegal('soporte','Soporte')}</p></section>`;
 }
-/* Ajustes (⚙ de la portada): tema, sonido y vibración. Se guardan en este móvil. */
-const enPartida=()=>!!(S&&mine()&&(S.phase==='play'||S.phase==='meeting'));
+/* Ajustes (⚙ fijo, en todas las pantallas): sonido y vibración; el tema solo en la portada. Se guardan en este móvil. */
 function ajustesSheet(){
   const fila=(a,t,k)=>`<div class="paso"><span>${t}</span><button class="tog ${SET[k]?'on':''}" data-a="${a}" role="switch" aria-checked="${SET[k]}" aria-label="${t}">${SET[k]?'Sí':'No'}</button></div>`;
-  const tema=enPartida()?'':`<p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
-    <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>`;
+  const tema=document.body.classList.contains('en-portada')?`<p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
+    <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>`:'';
   abrirSheet(`<h2>Ajustes</h2>${tema}
     ${fila('ajSonido','Sonido','sound')}${puedeVibrar()?fila('ajVibra','Vibración','vibra'):''}
     <p class="tenue" style="margin-top:10px">Solo suenan y vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes, fin de la votación y fin de la partida.</p>`);
@@ -2042,7 +2073,7 @@ function vAlertas(p){
 }
 function vJuego(){
   const p=mine();const {hechas,total}=progreso(S);const pct=total?Math.round(hechas/total*100):0;
-  let h=`<section class="barra-t"><div class="bt-cab"><span>Tareas de los Ciegos</span><span class="bt-r"><b>${pct}%</b><button class="aj-juego" data-a="ajustes" aria-label="Ajustes">&#9881;&#xFE0E;</button></span></div><div class="bt"><i style="width:${pct}%"></i></div></section>`;
+  let h=`<section class="barra-t"><div class="bt-cab"><span>Tareas de los Ciegos</span><b>${pct}%</b></div><div class="bt"><i style="width:${pct}%"></i></div></section>`;
   h+=vRol(p);
   if(p.dead&&!p.body)h+=`<p class="fantasma">${vivo('fantasma',{look:p.look,hood:p.color,anim:'fantasma',k:S.gid+'-'+p.id,w:54,h:78,ph:'espalda',alt:'Tu fantasma'})}<span>${p.ejected?'Te han expulsado. ':''}Eres un fantasma. ${p.role==='imp'?'Aún puedes sabotear.':'Sigue haciendo tareas: cuentan para los Ciegos.'} En las reuniones no puedes hablar ni votar.</span></p>`;
   h+=vAlertas(p);
@@ -2055,7 +2086,7 @@ function vJuego(){
     <button class="b-alarma" data-a="fix" data-panel="0">Estoy en ${esc(r.name)}: reparar</button>
     <button data-a="reportar">Reportar cuerpo</button></div>`;
   }
-  if(soyHost())h+=`<p style="margin-top:28px"><button class="b-link" data-a="terminar">Terminar partida</button></p>`;
+  h+=`<p style="margin-top:28px">${soyHost()?`<button class="b-link" data-a="terminar">Terminar partida</button> <span class="tenue sep">·</span> `:''}<button class="b-link" data-a="salirPartida">Salir de la partida</button></p>`;
   return h;
 }
 /* Panel de salas: lo mismo para Ciegos y Puntos (misma estructura, mismos indicadores; los Puntos cuentan
@@ -2082,7 +2113,7 @@ function vBarra(){
 }
 function vReunion(){
   const m=S.meet,p=mine(),t=ahora(),mr=sala(S.cfg.meet)||{name:'el punto de reunión'};
-  const ejectado=m.res&&m.res.out?P(S,m.res.out):null;
+  const ejectado=m.res&&m.res.out?(P(S,m.res.out)||(S.salidos&&S.salidos[m.res.out])):null;
   const cabecera=ejectado
     ?vivo('reunion',{look:ejectado.look,hood:ejectado.color,anim:'expulsado',est:'rojo',k:S.gid+'-eject-'+ejectado.id,w:150,h:190,ph:'espalda',alt:`${ejectado.name} ha sido expulsado`})
     :(()=>{const q=P(S,m.by);return vivo('reunion',{look:q?q.look:LOOK0,hood:q?q.color:BLANCO,anim:'salto',k:S.gid+(m.body?'c':'r'),w:150,h:190,ph:'salta',alt:'Saltando: reunión'})})();
@@ -2105,20 +2136,22 @@ function vReunion(){
     else if(p.id in m.votes){const v=m.votes[p.id];h+=`<p class="dondes">Has votado ${v==='skip'?'saltar':'a <b>'+esc(nombreDe(v))+'</b>'}. Espera al resto.</p>`}
     else h+=`<div class="votos">${S.players.map(x=>x.dead?`<div class="voto muerto">${dot(x)}${esc(x.name)}</div>`:`<button class="voto" data-a="votar" data-p="${x.id}">${dot(x,40)}${esc(x.name)}${bt(x)}</button>`).join('')}<button class="salta" data-a="votar" data-p="skip">Saltar voto</button></div>`;
   }else if(m.res){
-    const r=m.res,out=r.out?P(S,r.out):null;
+    const r=m.res,out=r.out?(P(S,r.out)||(S.salidos&&S.salidos[r.out])):null;
     h+=`<div class="fase"><span>Resultado</span></div>`;
     if(out){h+=`<h2 style="font-size:34px;margin-top:10px">${esc(out.name)} ha sido expulsado.</h2>`;
       if(S.cfg.confirm)h+=`<p class="sub">${r.imp?'Era un Punto.':'No era un Punto.'} ${r.quedan?`Queda${r.quedan>1?'n':''} ${r.quedan} Punto${r.quedan>1?'s':''}.`:''}</p>`}
     else h+=`<h2 style="font-size:34px;margin-top:10px">${r.empate?'Empate: nadie sale.':'Nadie ha sido expulsado.'}</h2>`;
     h+=`<div class="votos">${Object.entries(r.cuenta).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<div class="voto">${k==='skip'?'Saltar':dot(P(S,k)||{color:0})+esc(nombreDe(k))}<span class="n">${n}</span></div>`).join('')}</div>`;
   }
-  return `<div class="ov"><div class="ov-cuerpo">${h}</div>${pie?`<div class="ov-pie">${pie}</div>`:''}<div class="ov-tira"></div></div>`;
+  pie+=`<button class="b-link" data-a="salirPartida">Salir de la partida</button>`; /* siempre en el pie: a la vista sin deslizar, igual para todos */
+  return `<div class="ov"><div class="ov-cuerpo">${h}</div><div class="ov-pie">${pie}</div><div class="ov-tira"></div></div>`;
 }
 function vMuerto(){
   return `<div class="ov ov-muerto"><div class="ov-cuerpo"><div class="ov-franja"></div>${(()=>{const q=mine();return vivo('muerte',{look:q?q.look:LOOK0,hood:q?q.color:BLANCO,anim:'muerte',k:S.gid,w:300,h:190,ph:'agachado',alt:'Tu personaje ha caído'})})()}<h1>Te han matado</h1>
   <p class="sub">Túmbate o siéntate justo donde estás. No hables ni hagas señas hasta que alguien encuentre tu cuerpo y suene la reunión.</p>
   <p class="tenue">Después seguirás jugando como fantasma.</p>
-  <details class="reglas"><summary>Cómo se juega</summary>${REGLAS}</details></div></div>`;
+  <details class="reglas"><summary>Cómo se juega</summary>${REGLAS}</details></div>
+  <div class="ov-pie"><button class="b-link" data-a="salirPartida">Salir de la partida</button></div></div>`;
 }
 function vRevela(){
   const p=mine(),imp=p.role==='imp',socios=S.players.filter(x=>x.role==='imp'&&x.id!==p.id);
@@ -2129,13 +2162,13 @@ function vRevela(){
   return `<div class="ov"><div class="ov-cuerpo fit">${h}</div>${VISTO?`<div class="ov-pie"><button class="b-baliza b-ancho" data-a="entendido">Entendido</button></div>`:''}</div>`;
 }
 function vFin(){
-  const e=S.end||{};const imps=S.players.filter(x=>x.role==='imp');
+  const e=S.end||{};const fuera=Object.values(S.salidos||{});const imps=[...S.players,...fuera].filter(x=>x.role==='imp');
   const q=e.w==='imp'&&imps[0]?imps[0]:mine();
   const cara=e.w?vivo('fin',{look:q?q.look:LOOK0,hood:q?q.color:BLANCO,anim:'victoria',est:e.w==='imp'?'rojo':'',k:S.gid+'-'+e.w,w:190,h:230,ph:e.w==='imp'?'tresq':'feliz',alt:e.w==='imp'?'El Punto celebra':'Los Ciegos celebran'}):pose('frente',150,'',mine());
   let h=`<div class="ov-franja"></div><button class="b-link" data-a="salir">‹ Volver</button>${cara}${e.w?`<h1 class="fin-w ${e.w}">${e.w==='imp'?(imps.length>1?'Ganan los Puntos':'Gana el Punto'):'Ganan los Ciegos'}</h1>`:'<h1>Partida terminada</h1>'}
   <p class="sub">${esc(e.why||'')}</p>
   ${imps.length?`<p class="dondes">${imps.length>1?'Los Puntos eran':'El Punto era'} <b>${imps.map(x=>esc(x.name)).join(' y ')}</b>.</p>`:''}
-  <ul class="gente roles">${S.players.map(x=>`<li>${dot(x)}<span class="${x.role==='imp'?'imp':''}">${esc(x.name)}</span>${bt(x)}<em>${x.role==='imp'?'Punto':'Ciego'}${x.ejected?', expulsado':x.dead?', muerto':''}</em></li>`).join('')}</ul>
+  <ul class="gente roles">${S.players.map(x=>`<li>${dot(x)}<span class="${x.role==='imp'?'imp':''}">${esc(x.name)}</span>${bt(x)}<em>${x.role==='imp'?'Punto':'Ciego'}${x.ejected?', expulsado':x.dead?', muerto':''}</em></li>`).join('')}${fuera.map(x=>`<li>${dot(x)}<span class="${x.role==='imp'?'imp':''}">${esc(x.name)}</span><em>${x.role==='imp'?'Punto':'Ciego'}, salió</em></li>`).join('')}</ul>
   <details class="reglas"><summary>Qué pasó</summary>${(S.log||[]).map(l=>`<p class="log">${mmss(l.t-(S.t0||l.t))} ${esc(l.txt)}</p>`).join('')}</details>`;
   const pie=(soyHost()?`<button class="b-baliza b-ancho" data-a="aLobby">Otra partida con los mismos</button>`:`<p class="tenue" style="margin:0">El anfitrión puede empezar otra partida con el mismo grupo.</p>`)+`<button class="b-link" data-a="salir">Salir</button>`;
   return `<div class="ov"><div class="ov-cuerpo">${h}</div><div class="ov-pie">${pie}</div><div class="ov-tira"></div></div>`;
@@ -2214,7 +2247,7 @@ function capas(){
   const marca=(el,v)=>{if(!el)return;if(el.inert!==v)el.inert=v;if(v)el.setAttribute('aria-hidden','true');else el.removeAttribute('aria-hidden')};
   const tapa=bq||sheet||wk||ov;
   marca($('#top'),tapa);marca($('#app'),tapa);marca($('#bar'),tapa);
-  marca($('#over'),bq||sheet||wk);marca($('#wk'),bq||sheet);marca($('#sheet'),bq);marca($('#wkFab'),bq||sheet||wk);
+  marca($('#over'),bq||sheet||wk);marca($('#wk'),bq||sheet);marca($('#sheet'),bq);marca($('#wkFab'),bq||sheet||wk);marca($('#ajFab'),bq||sheet||wk);
   const b=document.body,h=document.documentElement;
   if(abierta&&CAPA_Y===null){
     CAPA_Y=window.scrollY||h.scrollTop||0;
@@ -3378,7 +3411,7 @@ async function entrar(code,name,crear){
 function salir(){
   /* si queda alguien, quien coja el mando vuelve a publicar. Va tras la salida (que publica el estado sin el anfitrión, y cifrar es asíncrono) y antes de cerrar las conexiones */
   if(soyHost()){const cons=NET.cons,topic=NET.topic;setTimeout(()=>borraRetenido(cons,topic),450)}
-  if(S&&mine()&&S.phase==='lobby'){const a=accion('leave');if(a)setTimeout(()=>enviar('a',a),250)} /* salida a propósito: se avisa dos veces y el anfitrión la aplica y publica al momento */
+  if(S&&mine()&&(S.phase==='lobby'||S.phase==='play'||S.phase==='meeting')){const a=accion('leave');if(a)setTimeout(()=>enviar('a',a),250)} /* salida a propósito: se avisa dos veces y el anfitrión la aplica y publica al momento */
   const code=ME.code,cons=NET.cons;setTimeout(()=>{if(NET.cons===cons)netStop()},600);
   ME={code:null,pid:null,name:ME.name};S=null;VISTA='menu';PEND.clear();cerrarSheet();WK.cerrar();WK.reco=false;WK.suelta();LS.del('imp.ultima');
   if(code)LS.del('imp.st.'+code);
@@ -3488,6 +3521,8 @@ const ACT={
     if(c.length!==5){toast('El código tiene 5 letras');$('#cod').focus();return}entrar(c,n,false)},
   volver(d){if(!PERFIL){VISTA='editor';return}entrar(d.c,PERFIL.name,false)},
   salir(){salir()},
+  salirPartida(){abrirSheet(`<h2>¿Salir de la partida?</h2><p class="tenue">Quedarás fuera como si te hubieran eliminado y no podrás volver a entrar. Los demás verán que has salido, pero no cuál era tu papel.</p><button class="b-alarma b-ancho" data-a="salirPartidaOk">Salir de la partida</button>`)},
+  salirPartidaOk(){salir()},
   compartir(){const url=urlPartida();const txt=`Únete a mi partida de Punto Ciego con el código ${ME.code}`;
     if(navigator.share)navigator.share({title:'Punto Ciego',text:txt,url}).catch(()=>{});
     else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>toast('Enlace copiado'));else toast(url)},
@@ -3675,6 +3710,6 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   }).catch(()=>{});
 });
 </script>
-<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v35</div>
+<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v36</div>
 </body>
 </html>
