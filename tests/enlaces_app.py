@@ -48,11 +48,11 @@ with sync_playwright() as pw:
     ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page()
     p.add_init_script(PUENTE); p.goto('http://localhost:8393/'+U); portada(p)
     t,rec,tienda,salir=bloq(p,'true')
-    ok('Actualiza la app' in t and not rec and not tienda and salir,'app, partida más nueva: «Actualiza la app», sin recargar; sin botón de tienda mientras no haya enlace')
+    ok('Actualiza la app' in t and not rec and tienda and salir,'app, partida más nueva: «Actualiza la app», sin recargar; con botón de la tienda')
     t,rec,tienda,salir=bloq(p,'false'); ok('anfitrión tiene que actualizar' in t and not rec,'app, partida más antigua: pide al anfitrión que actualice, sin recargar')
     p.click('#bloqueoSalir'); ok(p.evaluate("BLOQUEO")==None and p.locator('#bloqueo').count()==0,'app: «Salir de esta partida» quita el bloqueo'); ctx.close()
-    ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); URL_T='https://apps.apple.com/app/id1234567890'
-    p.route(re.compile(r'.*/(\?.*)?$'),lambda r:r.fulfill(status=200,content_type='text/html; charset=utf-8',body=r.fetch().text().replace("const APP_STORE_URL='';","const APP_STORE_URL='"+URL_T+"';")))
+    ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); URL_T='https://apps.apple.com/app/id6822717539'
+    p.route(re.compile(r'.*/(\?.*)?$'),lambda r:r.fulfill(status=200,content_type='text/html; charset=utf-8',body=r.fetch().text()))
     p.add_init_script(PUENTE); p.goto('http://localhost:8393/'+U); portada(p)
     t,rec,tienda,salir=bloq(p,'true'); ok(tienda and not rec,'app con enlace de la tienda: botón «Abrir la App Store»')
     p.click('#bloqueoTienda'); p.wait_for_timeout(200); ok(['Browser','open',{'url':URL_T}] in p.evaluate("window.__llamadas"),'el botón abre la ficha de la App Store'); ctx.close()
