@@ -139,13 +139,13 @@ try:
         pn=ctx.new_page(); pn.goto(B); pn.wait_for_selector('[data-a=entrarCuenta]')
         m0=pn.evaluate(MIDE); ok(m0 is not None and m0['encima'] and m0['solapa']==[],f"⚙ en la pantalla de acceso, sin tapar nada {m0 and m0['solapa']}"); pn.close()
         p.reload(); p.wait_for_selector('[data-a=invitado]'); p.click('[data-a=invitado]'); p.wait_for_selector('[data-a=jugar]'); mide('portada')
-        p.click('[data-a=ajustes]'); p.wait_for_selector('[data-a=ajSonido]')
-        ok(p.locator('[data-a=ajTema]').count()==3 and p.locator('[data-a=ajSonido]').count()==1 and p.locator('[data-a=ajVibra]').count()==1,'portada: Tema, Sonido y Vibración'); p.click('#shPie [data-a=cerrarSheet]')
+        p.click('[data-a=ajustes]'); p.wait_for_selector('[data-a=ajVibra]')
+        ok(p.locator('[data-a=ajTema]').count()==3 and p.locator('[data-a=ajSonido]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'portada: Tema y Vibración'); p.click('#shPie [data-a=cerrarSheet]')
         p.click('[data-a=jugar]'); p.wait_for_selector('#nom'); mide('editor del personaje')
         p.fill('#nom','Hugo'); p.wait_for_timeout(600); p.click('[data-a=guardarPerfil]'); p.wait_for_selector('[data-a=crear]'); mide('menú de jugar')
         p.click('[data-a=crear]'); p.wait_for_selector('[data-a=botMas3]'); mide('sala de espera')
-        p.click('[data-a=ajustes]'); p.wait_for_selector('[data-a=ajSonido]')
-        ok(p.locator('[data-a=ajTema]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'sala de espera: solo Sonido y Vibración'); p.click('#shPie [data-a=cerrarSheet]')
+        p.click('[data-a=ajustes]'); p.wait_for_selector('[data-a=ajVibra]')
+        ok(p.locator('[data-a=ajTema]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'sala de espera: solo Vibración'); p.click('#shPie [data-a=cerrarSheet]')
         # partida montada con el reducer real, vista por cada papel
         for quien,nombre in [('h','anfitrión'),('a','Ciego'),('d','Punto')]:
             for fase,sub,nom in [('revela','','reparto de papel'),('play','','partida'),('meeting','disc','reunión (debate)'),('meeting','vote','votación'),('meeting','res','resultado de la votación'),('muerto','','te han matado'),('end','','final')]:
@@ -161,7 +161,7 @@ try:
         # el ⚙ ya no está duplicado en la cabecera de tareas ni en la portada
         pantalla('','play','','a'); ok(p.locator('.aj-juego,.aj-btn').count()==0,'sin segundo ⚙ en la cabecera de tareas ni en la portada')
         # en partida (reunión incluida): ajustes con efecto inmediato
-        pantalla('','meeting','vote','a'); p.click('#ajFab'); p.wait_for_selector('[data-a=ajSonido]')
+        pantalla('','meeting','vote','a'); p.click('#ajFab'); p.wait_for_selector('[data-a=ajVibra]')
         ok(p.locator('[data-a=ajTema]').count()==0,'reunión: sin Tema')
         p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==False,'reunión: la vibración se apaga al instante'); p.click('[data-a=ajVibra]'); p.click('#shPie [data-a=cerrarSheet]')
         ok(not errs,f'sin errores de JS {errs}')

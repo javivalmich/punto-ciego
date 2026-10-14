@@ -1779,7 +1779,10 @@ setInterval(()=>{ /* si el anfitrión desaparece, otro coge el mando */
 },1000);
 
 /* ============ sonidos y avisos ============ */
+/* Efectos de sonido apagados en la 1.0: con false, tono() y los avisos de SON no hacen nada (el código se conserva). El walkie no depende de esto. */
+const SFX_ENABLED=false;
 function tono(seq){
+  if(!SFX_ENABLED)return;
   const c=WK.ctx();if(!c)return;let t=c.currentTime+0.02;
   for(const [f,d,type='square',v=0.1] of seq){
     const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;
@@ -1796,7 +1799,7 @@ const SON={
 };
 /* Los únicos avisos con sonido y vibración, iguales para todos los móviles a la vez (nada depende del papel de nadie) */
 const VIB={cadaver:[600,200,600,200,600],reunion:[300,120,300,120,300],sabotaje:[500,200,500],inicio:[80,60,80],fin:[100,60,100,60,300],votacion:[200,100,200]};
-function avisa(k){if(SET.sound)try{SON[k]()}catch(e){}vibraAviso(VIB[k])}
+function avisa(k){if(SFX_ENABLED&&SET.sound)try{SON[k]()}catch(e){}vibraAviso(VIB[k])}
 function eventos(){
   if(!S||!ME.pid)return;const p=mine(),pr=PREV;
   PREV={phase:S.phase,mn:S.meet?S.meet.n:0,mf:S.meet?S.meet.fase:'',sab:S.sab?S.sab.kind+S.sab.rooms.join():'',dead:!!(p&&p.dead),gid:S.gid,notice:S.notice?S.notice.t:0,av:S.aviso?S.aviso.n:0};
@@ -1857,8 +1860,8 @@ function ajustesSheet(){
   const tema=document.body.classList.contains('en-portada')?`<p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
     <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>`:'';
   abrirSheet(`<h2>Ajustes</h2>${tema}
-    ${fila('ajSonido','Sonido','sound')}${puedeVibrar()?fila('ajVibra','Vibración','vibra'):''}
-    <p class="tenue" style="margin-top:10px">Solo suenan y vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes, fin de la votación y fin de la partida.</p>`);
+    ${SFX_ENABLED?fila('ajSonido','Sonido','sound'):''}${puedeVibrar()?fila('ajVibra','Vibración','vibra'):''}
+    <p class="tenue" style="margin-top:10px">Solo ${SFX_ENABLED?'suenan y ':''}vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes, fin de la votación y fin de la partida.</p>`);
 }
 function vEditor(){
   const nuevo=!PERFIL,l=limpiaLook(EDIT.look);
@@ -3443,7 +3446,7 @@ function cambiaCfg(fn){if(!soyHost())return;const c=JSON.parse(JSON.stringify(S.
 const ACT={
   ajustes(){ajustesSheet()},
   ajTema(d){setAjuste('theme',d.v);ajustesSheet()},
-  ajSonido(){setAjuste('sound',!SET.sound);if(SET.sound)WK.ctx();ajustesSheet()},
+  ajSonido(){if(!SFX_ENABLED)return;setAjuste('sound',!SET.sound);if(SET.sound)WK.ctx();ajustesSheet()},
   ajVibra(){setAjuste('vibra',!SET.vibra);ajustesSheet()},
   jugar(){WK.ctx();PORT_VOL=false;VISTA=PERFIL?'menu':'editor';EDIT=null;scrollTo(0,0)},
   modoAcceso(d){ACCESO.modo=d.m;ACCESO.err='';ACCESO.msg=''},

@@ -27,11 +27,11 @@ BUCLE="""()=>{
 def AJUSTES_PARTIDA(p):
     # ⚙ dentro de la partida: mismo botón para todos, sin Tema, efecto inmediato
     ok(p.locator('#ajFab').count()==1,'ajustes en la pantalla de juego')
-    p.click('#ajFab'); p.wait_for_selector('[data-a=ajSonido]')
-    ok(p.locator('[data-a=ajTema]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'en partida: solo Sonido y Vibración')
+    p.click('#ajFab'); p.wait_for_selector('[data-a=ajVibra]')
+    ok(p.locator('[data-a=ajTema]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'en partida: solo Vibración (sin Sonido en la 1.0)')
     p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==False and p.evaluate("LS.get('pc.vibra',1)")==0,'vibración apagada al instante y guardada')
     p.evaluate("window.__vib=[];avisa('fin')"); ok(p.evaluate("window.__vib")==[],'apagada: no vibra')
-    p.click('[data-a=ajVibra]'); p.click('[data-a=ajSonido]'); ok(p.evaluate("SET.sound")==False,'sonido apagado al instante'); p.click('[data-a=ajSonido]')
+    p.click('[data-a=ajVibra]'); ok(p.locator('[data-a=ajSonido]').count()==0 and p.evaluate("SFX_ENABLED")==False,'sin opción de sonido y SFX_ENABLED apagado')
     p.click('#shPie [data-a=cerrarSheet]'); p.evaluate("window.__vib=[]")
 try:
     with sync_playwright() as pw:
@@ -42,12 +42,12 @@ try:
         # ajustes
         ok(p.evaluate("document.documentElement.getAttribute('data-theme')")=='dark','tema oscuro por defecto')
         p.click('[data-a=ajustes]'); p.wait_for_selector('[data-a=ajTema]')
-        ok(p.locator('[data-a=ajSonido]').count()==1 and p.locator('[data-a=ajVibra]').count()==1,'ajustes: tema, sonido y vibración')
+        ok(p.locator('[data-a=ajSonido]').count()==0 and p.locator('[data-a=ajVibra]').count()==1,'ajustes: tema y vibración')
         p.click('[data-a=ajTema][data-v=light]'); ok(p.evaluate("document.documentElement.getAttribute('data-theme')")=='light','tema claro aplicado')
         p.click('[data-a=ajTema][data-v=auto]'); ok(p.evaluate("document.documentElement.hasAttribute('data-theme')")==False,'tema automático: sin atributo')
         p.click('[data-a=ajTema][data-v=dark]')
         p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==False,'vibración apagada'); p.click('[data-a=ajVibra]'); ok(p.evaluate("SET.vibra")==True,'vibración encendida')
-        p.click('[data-a=ajSonido]'); p.reload(); p.wait_for_selector('[data-a=jugar]'); ok(p.evaluate("SET.sound")==False,'el ajuste de sonido se guarda'); p.evaluate("setAjuste('sound',true)")
+        p.reload(); p.wait_for_selector('[data-a=jugar]')
         # sala: walkie desactivado por defecto
         p.click('[data-a=jugar]'); p.wait_for_selector('#nom'); p.fill('#nom','Avisos'); p.wait_for_timeout(600); p.click('[data-a=guardarPerfil]'); p.wait_for_selector('[data-a=crear]')
         p.click('[data-a=crear]'); p.wait_for_selector('[data-a=botMas3]'); p.click('[data-a=botMas3]'); p.wait_for_timeout(400)
