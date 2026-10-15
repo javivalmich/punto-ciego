@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo de la ventana: el de la web en su tema por defecto (oscuro); después lo pinta la página (AudioSesion.barras) -->
+    <color name="fondo">#0C0C0C</color>
+    <!-- Pantalla de inicio: el fondo del logo -->
+    <color name="fondo_splash">#050504</color>
+</resources>

@@ -42,7 +42,8 @@ public class AudioSesionPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "AudioSesionPlugin"
     public let jsName = "AudioSesion"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "modo", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "modo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "abrirAjustes", returnType: CAPPluginReturnPromise)
     ]
 
     @objc public func modo(_ call: CAPPluginCall) {
@@ -50,6 +51,14 @@ public class AudioSesionPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async {
             AudioSesion.aplicar(walkie: walkie)
             call.resolve()
+        }
+    }
+
+    /// Abre los ajustes de la app (Ajustes → Punto Ciego), p. ej. para reactivar el micrófono si se denegó.
+    @objc public func abrirAjustes(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { call.reject("sin url de ajustes"); return }
+            UIApplication.shared.open(url, options: [:]) { ok in ok ? call.resolve() : call.reject("no se pudo abrir") }
         }
     }
 }

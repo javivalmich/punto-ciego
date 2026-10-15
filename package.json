@@ -6,7 +6,9 @@
   "scripts": {
     "web": "node scripts/preparar-www.mjs",
     "cap:sync": "node scripts/preparar-www.mjs && cap sync ios",
-    "cap:abrir": "npm run cap:sync && cap open ios"
+    "cap:abrir": "npm run cap:sync && cap open ios",
+    "android:sync": "node scripts/preparar-www.mjs && cap sync android",
+    "android:abrir": "npm run android:sync && cap open android"
   },
   "dependencies": {
     "@capacitor-community/apple-sign-in": "^7.1.0",
@@ -17,6 +19,7 @@
     "@capgo/capacitor-social-login": "^8.5.14"
   },
   "devDependencies": {
+    "@capacitor/android": "8.5.3",
     "@capacitor/cli": "^8.0.0",
     "@capacitor/ios": "^8.0.0"
   }

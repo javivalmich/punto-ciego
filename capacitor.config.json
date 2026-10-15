@@ -15,6 +15,12 @@
         "twitter": false
       },
       "logLevel": 1
+    },
+    "SystemBars": {
+      "insetsHandling": "disable"
     }
+  },
+  "android": {
+    "backgroundColor": "#0C0C0C"
   }
 }

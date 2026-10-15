@@ -373,6 +373,9 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 #wkPtt.on{background:var(--baliza);border-color:var(--baliza);color:#fff}
 #wkPtt *{pointer-events:none}
 #wkNivel{position:absolute;left:0;bottom:0;height:6px;width:100%;background:var(--tiza);transform:scaleX(0);transform-origin:left}
+#wkMicOff{border:2px solid var(--alarma);border-radius:12px;padding:8px 12px;margin:8px auto 0;font-size:14px;line-height:1.35}
+#wkMicOff[hidden]{display:none}
+#wkMicOff p{margin:0 0 8px}
 #wkEstado{font-size:14px;color:var(--tiza);margin:8px auto 0;min-height:20px}
 #wkDiag{font-size:12.5px;color:var(--niebla);margin:2px auto 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -494,6 +497,7 @@ button.pulsado.b-alarma:not([disabled]),button.pulsado.b-jugar:not([disabled]){f
     <button id="wkPtt"><span id="wkPttTxt">Mantén para hablar</span><i id="wkNivel"></i></button>
     <p id="wkNormas">El chat es entre amigos y no está moderado. Toca ⚑ junto a un mensaje para bloquear o reportar a alguien.</p>
     <p id="wkMicNota">🎤 El micrófono solo se activa mientras mantienes pulsado el botón de hablar. Tu voz se envía al grupo en directo, cifrada, y no se graba ni se guarda. La primera vez, tu móvil te pedirá permiso.</p>
+    <div id="wkMicOff" hidden><p></p><button class="b-sec b-ancho" id="wkAjustes">Abrir Ajustes</button></div>
     <p id="wkEstado"></p>
     <p id="wkDiag"></p>
     <button id="wkVolver" class="b-sec b-ancho" style="margin-top:6px">Volver con walkie abierto</button>
@@ -700,6 +704,9 @@ class Mq{
   close(){this.dead=true;clearInterval(this.ping);clearTimeout(this.rt);clearTimeout(this.tmo);try{this.ws&&this.ws.close()}catch(e){}}
 }
 const EN_APP=false; /* la beta es solo web: sin Capacitor, sin plugins nativos */
+/* Android (misma app Capacitor, WebView de Chrome): plugin AudioSesion propio y mínimo, sin Sign in with Apple, botón «atrás» propio y Google con Credential Manager */
+const ANDROID=EN_APP&&!!window.Capacitor.getPlatform&&window.Capacitor.getPlatform()==='android';
+if(ANDROID)document.documentElement.classList.add('en-android');
 /* Sesión de audio. WKWebView pisa la categoría nativa, así que se fija con navigator.audioSession.type (iOS 16.4+): 'ambient' por defecto (los avisos
    respetan el interruptor de silencio) y 'play-and-record' mientras algo usa el micro (walkie abierto, pruebas de soplar…); la categoría nativa
    (plugin AudioSesion) queda de respaldo. El console.log es temporal, para comprobarlo en Xcode. */
@@ -818,7 +825,7 @@ let PERFIL=null;
 let INVITADO=!!LS.get('pc.invitado');
 const perfilLocal=()=>{const x=LS.get('pc.perfil');return x&&x.name?{name:x.name,look:limpiaLook(x.look)}:null};
 let GOOGLE=false; /* se activa solo si el proveedor Google está habilitado en Supabase */
-let APPLE=false; /* se activa solo si el proveedor Apple está habilitado en Supabase */
+let APPLE=false; /* se activa solo si el proveedor Apple está habilitado en Supabase y no es Android (el plugin nativo es solo de iOS y el flujo web de Apple no vuelve a la app) */
 if(!CUENTAS){
   PERFIL=LS.get('pc.perfil');
   if(!PERFIL&&LS.get('imp.nombre'))PERFIL={name:LS.get('imp.nombre'),look:{...LOOK0}};
@@ -841,6 +848,10 @@ async function borrarCuentaRemota(sb){
 const PLUGINS={};
 const plugin=n=>PLUGINS[n]||(PLUGINS[n]=window.Capacitor.registerPlugin(n));
 const APPLE_BUNDLE_ID='es.puntostudio.puntociego';
+/* Micrófono denegado en la app: aviso con «Abrir Ajustes» (plugin AudioSesion.abrirAjustes, en iOS y en Android). Sin el plugin, solo dice dónde está el permiso. */
+const RUTA_MIC=()=>ANDROID?'Ajustes → Aplicaciones → Punto Ciego → Permisos → Micrófono':'Ajustes → Punto Ciego → Micrófono';
+async function abreAjustesApp(){try{await plugin('AudioSesion').abrirAjustes()}catch(e){toast('Abre '+RUTA_MIC())}}
+const micDenegado=e=>!!(e&&e.name==='NotAllowedError');
 /* En la app la página se sirve desde capacitor://localhost: cualquier enlace que salga del WebView con ese origen se lo queda otra app
    del móvil que use el mismo esquema, y lo que se comparta o vuelva por correo no sirve fuera. Por eso las páginas externas se abren
    con @capacitor/browser (navegador del sistema dentro de la app) y con la URL pública, y los enlaces para compartir llevan la web. */
@@ -848,8 +859,10 @@ const WEB_BASE='https://puntostudio.es/punto-ciego/';
 /* Ficha de la app en la App Store (https://apps.apple.com/app/idNNNNNNNNN). Cuando se tenga el ID, se rellena aquí; mientras esté vacío, la pantalla de
    «Actualiza la app» no ofrece el botón de la tienda (el mensaje sí sale). */
 const APP_STORE_URL='https://apps.apple.com/app/id6822717539';
+const PLAY_STORE_URL='https://play.google.com/store/apps/details?id=es.puntostudio.puntociego'; /* ficha en Google Play (Android) */
+const TIENDA_URL=ANDROID?PLAY_STORE_URL:APP_STORE_URL,TIENDA_NOMBRE=ANDROID?'Google Play':'App Store';
 function abreTienda(){
-  const url=APP_STORE_URL;if(!url)return;
+  const url=TIENDA_URL;if(!url)return;
   const fallo=()=>{try{window.open(url,'_system')}catch(y){}};
   try{Promise.resolve(plugin('Browser').open({url})).catch(fallo)}catch(x){fallo()}
 }
@@ -867,6 +880,8 @@ async function sha256Hex(t){const b=await crypto.subtle.digest('SHA-256',new Tex
    GOOGLE_IOS_ID es el ID de cliente OAuth de tipo iOS (Google Cloud Console, bundle es.puntostudio.puntociego); mientras esté vacío, la app no ofrece Google.
    Tiene que ser un cliente DISTINTO del web: con el del web, Google rechaza el inicio de sesión nativo. Su esquema inverso (com.googleusercontent.apps.…)
    debe estar también en CFBundleURLTypes de ios/App/App/Info.plist (lo comprueba tests/google_ios.py).
+   En Android no hace falta ningún ID en el código: Credential Manager usa el cliente WEB (GOOGLE_WEB_ID, como webClientId) y Google comprueba la firma del APK/AAB contra el
+   cliente OAuth de tipo Android (paquete es.puntostudio.puntociego + SHA-1) creado en Google Cloud, ver docs/APP_ANDROID.md.
    GOOGLE_WEB_ID es el cliente web (el de Supabase, ver supabase/config.toml): se pasa como iOSServerClientId para que el token lleve ese cliente
    como audiencia y Supabase lo acepte sin depender de «Authorized Client IDs». */
 const GOOGLE_IOS_ID='696175970854-fq2thehvb2qrub3ko7a8icj6e6mlbn41.apps.googleusercontent.com';
@@ -875,10 +890,11 @@ let GOOGLE_INI=false;
 function googleCancelado(e){return /USER_CANCELLED|cancel/i.test((e&&(e.code||e.message))||'')}
 async function entraConGoogleNativo(){
   const sl=plugin('SocialLogin');
-  if(!GOOGLE_INI){await sl.initialize({google:{iOSClientId:GOOGLE_IOS_ID,iOSServerClientId:GOOGLE_WEB_ID,mode:'online'}});GOOGLE_INI=true}
+  if(!GOOGLE_INI){await sl.initialize({google:{webClientId:GOOGLE_WEB_ID,iOSClientId:GOOGLE_IOS_ID,iOSServerClientId:GOOGLE_WEB_ID,mode:'online'}});GOOGLE_INI=true}
   const raw=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
   /* a Google se le da el nonce con hash; a Supabase, el original. forcePrompt evita que el plugin reutilice una sesión previa de Google (con otro nonce) */
-  const r=await sl.login({provider:'google',options:{scopes:['email','profile'],nonce:await sha256Hex(raw),forcePrompt:true}});
+  /* en Android, pasar «scopes» exige modificar la MainActivity del plugin: se omiten (email y perfil ya van por defecto) */
+  const r=await sl.login({provider:'google',options:{...(ANDROID?{}:{scopes:['email','profile']}),nonce:await sha256Hex(raw),forcePrompt:true}});
   const tok=r&&r.result&&r.result.idToken;
   if(!tok)throw new Error('Google no devolvió el token');
   const {error}=await SB.auth.signInWithIdToken({provider:'google',token:tok,nonce:raw});
@@ -915,7 +931,7 @@ async function iniciaCuentas(){
   try{
     await cargaScript(SB_LIB);
     SB=window.supabase.createClient(SUPA.url,SUPA.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-    fetch(SUPA.url+'/auth/v1/settings',{headers:{apikey:SUPA.key}}).then(r=>r.json()).then(j=>{if(j&&j.external){if(j.external.google&&(!EN_APP||GOOGLE_IOS_ID)){GOOGLE=true}if(j.external.apple){APPLE=true}pinta()}}).catch(()=>{});
+    fetch(SUPA.url+'/auth/v1/settings',{headers:{apikey:SUPA.key}}).then(r=>r.json()).then(j=>{if(j&&j.external){if(j.external.google&&(!EN_APP||ANDROID||GOOGLE_IOS_ID)){GOOGLE=true}if(j.external.apple&&!ANDROID){APPLE=true}pinta()}}).catch(()=>{});
     SB.auth.onAuthStateChange((ev,ses)=>{guardaTokenApple(SB,ses);setTimeout(()=>trasSesion(ev,ses),0)});
     const {data}=await SB.auth.getSession();
     await trasSesion('INICIO',data.session);
@@ -2206,12 +2222,12 @@ function bloqueo(){
       else if(ev.target.closest('#bloqueoTienda'))abreTienda();
       else if(ev.target.closest('#bloqueoSalir')){BLOQUEO=null;salir()}
     })}
-  /* En la app no sirve recargar (la pantalla del juego va dentro de la app): si la partida es más nueva, hay que actualizar desde la App Store;
+  /* En la app no sirve recargar (la pantalla del juego va dentro de la app): si la partida es más nueva, hay que actualizar desde la tienda (App Store o Google Play);
      si es más antigua, quien tiene que actualizar es el anfitrión. En la web se recarga la página, como siempre. */
   const h=EN_APP
     ?(BLOQUEO.vieja
       ?`<div class="bq-c"><h1>Actualiza la app</h1><p>Esta partida usa una versión más reciente de Punto Ciego que la de tu app. Actualízala para seguir jugando.</p>
-        ${APP_STORE_URL?`<button class="b-baliza b-ancho" id="bloqueoTienda">Abrir la App Store</button>`:''}
+        ${TIENDA_URL?`<button class="b-baliza b-ancho" id="bloqueoTienda">Abrir ${ANDROID?'Google Play':'la App Store'}</button>`:''}
         <button class="b-link" id="bloqueoSalir">Salir de esta partida</button></div>`
       :`<div class="bq-c"><h1>Versión distinta</h1><p>Esta partida usa una versión más antigua de Punto Ciego que la de tu app: el anfitrión tiene que actualizar la suya.</p>
         <button class="b-link" id="bloqueoSalir">Salir de esta partida</button></div>`)
@@ -2889,7 +2905,8 @@ const JUEGOS={
       audioUso('soplar',true);   /* play-and-record mientras dura la prueba: el micro funciona también con el iPhone en silencio */
       navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
         if(!el.isConnected){stream.getTracks().forEach(t=>t.stop());audioUso('soplar',false);return}JUEGOS._soplarS(el,ok,stream);
-      }).catch(()=>{audioUso('soplar',false);if(el.isConnected)JUEGOS._soplarT(el,ok)});
+      }).catch(e=>{audioUso('soplar',false);if(!el.isConnected)return;JUEGOS._soplarT(el,ok);
+        if(EN_APP&&micDenegado(e)){el.insertAdjacentHTML('afterbegin',`<p class="g-ayuda">Has desactivado el micrófono: puedes seguir tocando la pantalla, o activarlo en ${RUTA_MIC()}.</p><button class="b-sec b-ancho" id="gAjustes" style="margin-bottom:8px">Abrir Ajustes</button>`);el.querySelector('#gAjustes').onclick=abreAjustesApp}});
     };
   },
   _soplarS(el,ok,stream){
@@ -3249,6 +3266,7 @@ const WK={
   },
   oye(ch){const p=mine();if(!p)return false;if(ch==='g')return !!p.dead;return !this.atasco()},
   estado(t){$('#wkEstado').textContent=t||''},
+  avisoMic(on){const b=$('#wkMicOff');if(!b)return;if(on)b.querySelector('p').textContent='Has desactivado el micrófono. Actívalo en '+RUTA_MIC()+' para hablar por el walkie. Los mensajes de texto siguen funcionando.';b.hidden=!on},
   diag(){
     const n=redOk(),tot=NET.cons.length;
     let t=tot?`Conexión: ${n} de ${tot} servidores${n?'':' (sin red)'}`:'';
@@ -3264,7 +3282,7 @@ const WK={
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('este navegador no deja usar el micro');
     const g=this.gen,s=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     if(g!==this.gen){s.getTracks().forEach(t=>{try{t.stop()}catch(e){}});const e=new Error('micro soltado');e.soltado=true;throw e}
-    this.stream=s;this.src=null;
+    this.stream=s;this.src=null;this.avisoMic(false);
     LS.set('imp.micok',1);$('#wkMicNota').hidden=true;
   },
   /* suelta el micro de verdad (el punto naranja de iOS desaparece) y cierra el audio; se vuelve a abrir al pedirlo */
@@ -3291,6 +3309,7 @@ const WK={
     this.btn(true);this.estado('Abriendo micro…');
     try{await this.micro()}catch(e){if(this.rec===r)this.rec=null;this.btn(false);this.nivel(0);
       if(e.soltado){this.diag();return}
+      if(EN_APP&&micDenegado(e)){this.avisoMic(true);this.estado('');this.diag();return}
       this.estado(this.inapp()?'Aquí el micro está bloqueado: abre la web en Chrome o Safari':e.name==='NotAllowedError'?'Toca para activar el micro. Si no te pide permiso, actívalo en los ajustes del navegador.':'No hay acceso al micro: '+(e.message||e.name));this.diag();return}
     if(this.rec!==r)return;
     r.arrancando=false;r.t0=Date.now();this.ruido(.07,.1);this.diag();
@@ -3403,6 +3422,8 @@ const WK={
   cerrar(){this.abierto=false;audioUso('walkie',false);$('#wk').hidden=true;capas();if(this.rec)this.para(true);this.pinta()},
   init(){
     $('#wkFab').onclick=()=>this.abrir();$('#wkCerrar').onclick=()=>this.cerrar();$('#wkVolver').onclick=()=>this.cerrar();$('#wkDesc').onclick=()=>this.desconectar();$('#wkFondo').onclick=()=>this.cerrar();
+    $('#wkAjustes').onclick=abreAjustesApp;
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#wkMicOff').hidden){this.avisoMic(false);this.estado('')}}); /* al volver de Ajustes se quita el aviso: el siguiente intento de hablar lo vuelve a pedir */
     const mandar=()=>{const i=$('#wkTxt'),t=i.value.trim();if(!t||this.noPuede())return;accion('chat',{txt:t});i.value=''};
     $('#wkEnviar').onclick=mandar;$('#wkTxt').onkeydown=e=>{if(e.key==='Enter')mandar()};
     const b=$('#wkPtt');let abajo=0,tocaParar=false;
@@ -3696,6 +3717,37 @@ document.addEventListener('pointerdown',()=>{WK.ctx()});
 WK.init();
 if(LS.get('imp.micok'))$('#wkMicNota').hidden=true;
 {const f=document.createElement('button');f.id='prFab';f.hidden=true;f.textContent='⚡ Atajos';f.dataset.a='atajos';document.body.appendChild(f)} /* oculto salvo en cuentas con puede_bots (enAtajos) */
+/* Android: botón «atrás» del sistema. Cierra lo que esté encima (hoja, walkie), luego hace lo mismo que «‹ Volver» de cada pantalla y, en plena partida,
+   pregunta «¿Salir de la partida?» (nunca cierra la app ni saca de la partida sin preguntar). La app solo se cierra desde la portada o el acceso. */
+if(ANDROID)try{
+  const AppP=plugin('App'),clic=sel=>{const b=document.querySelector(sel);if(b&&!b.disabled){b.click();return true}return false};
+  AppP.addListener('backButton',()=>{
+    if(!$('#sheet').hidden){cerrarSheet();return}
+    if(WK.abierto){WK.cerrar();return}
+    if(ME&&ME.code){
+      if(S&&mine()&&(S.phase==='play'||S.phase==='meeting')){ACT.salirPartida();return}
+      if(clic('#over [data-a=salir],#app [data-a=salir]'))return;
+      ACT.salirPartida();return;
+    }
+    if(clic('#app [data-a=editorVolver]')||clic('#app [data-a=aMenu]')||clic('#app [data-a=aPortada]'))return;
+    try{AppP.exitApp()}catch(e){}
+  });
+}catch(e){console.warn('back',e)}
+/* Android: las franjas de las barras del sistema las pinta la ventana nativa (el WebView termina encima de ellas, ver MainActivity); aquí se les pasa el color de la página
+   para que se vean como parte de la pantalla (tema claro, oscuro o automático). */
+try{if(ANDROID){
+  const P=plugin('AudioSesion');let ultB='';
+  const hex=c=>{const m=String(c).match(/[\d.]+/g);return m&&m.length>=3?'#'+m.slice(0,3).map(x=>(Math.round(+x)).toString(16).padStart(2,'0')).join(''):'#0c0c0c'};
+  const pintaBarras=()=>{
+    const bg=hex(getComputedStyle(document.body).backgroundColor);
+    if(bg===ultB)return;ultB=bg;
+    try{Promise.resolve(P.barras({arriba:bg,abajo:bg})).catch(()=>{})}catch(e){}
+  };
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>setTimeout(pintaBarras,50));
+  new MutationObserver(pintaBarras).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  const mt=document.querySelector('meta[name=theme-color]');if(mt)new MutationObserver(pintaBarras).observe(mt,{attributes:true,attributeFilter:['content']});
+  pintaBarras();
+}}catch(x){console.warn('barras',x)}
 /* Universal Links: el enlace y el QR de una partida (https://puntostudio.es/punto-ciego/?c=CÓDIGO) abren la app si está instalada (apple-app-site-association en
    puntostudio.es + entitlement applinks). @capacitor/app avisa con appUrlOpen, también si la app estaba cerrada (el aviso se retiene hasta que hay oyente). */
 function abreEnlace(url){
@@ -3709,6 +3761,8 @@ function abreEnlace(url){
   pinta();
 }
 if(EN_APP)try{Promise.resolve(plugin('App').addListener('appUrlOpen',e=>abreEnlace(e&&e.url))).catch(x=>console.warn('appUrlOpen',x))}catch(x){console.warn('appUrlOpen',x)}
+/* Android: en un arranque en frío el enlace llega por getLaunchUrl (abreEnlace ignora el segundo aviso del mismo código si ya se está dentro de la sala) */
+if(ANDROID)try{Promise.resolve(plugin('App').getLaunchUrl()).then(r=>r&&r.url&&abreEnlace(r.url)).catch(()=>{})}catch(x){}
 (function arranque(){
   const q=(new URLSearchParams(location.search).get('c')||'').toUpperCase();
   const ult=LS.get('imp.ultima');

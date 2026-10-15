@@ -56,6 +56,57 @@ with sync_playwright() as pw:
     p.add_init_script(PUENTE); p.goto('http://localhost:8393/'+U); portada(p)
     t,rec,tienda,salir=bloq(p,'true'); ok(tienda and not rec,'app con enlace de la tienda: botón «Abrir la App Store»')
     p.click('#bloqueoTienda'); p.wait_for_timeout(200); ok(['Browser','open',{'url':URL_T}] in p.evaluate("window.__llamadas"),'el botón abre la ficha de la App Store'); ctx.close()
+    # --- app Android: mismo puente pero con androidBridge (así lo detecta @capacitor/core), sin Sign in with Apple ni AudioSesion de iOS ---
+    PUENTE_AND="""window.__llamadas=[];window.__cbs={};
+window.androidBridge={postMessage(){}};
+window.Capacitor={isNativePlatform:()=>true,
+  PluginHeaders:[{name:'Browser',methods:[{name:'open',rtype:'promise'}]},
+    {name:'App',methods:[{name:'addListener',rtype:'callback'},{name:'removeListener',rtype:'promise'},{name:'exitApp',rtype:'promise'},{name:'getLaunchUrl',rtype:'promise'}]},
+    {name:'AudioSesion',methods:[{name:'modo',rtype:'promise'},{name:'abrirAjustes',rtype:'promise'},{name:'barras',rtype:'promise'}]},
+    {name:'SocialLogin',methods:[{name:'initialize',rtype:'promise'},{name:'login',rtype:'promise'}]}],
+  nativePromise:(plugin,metodo,opts)=>{window.__llamadas.push([plugin,metodo,opts]);return Promise.resolve({})},
+  nativeCallback:(plugin,metodo,opts,cb)=>{window.__cbs[plugin+'.'+(opts&&opts.eventName)]=cb;window.__llamadas.push([plugin,metodo,opts]);return Promise.resolve('id1')}};"""
+    def hay(p,plug,met): return any(a==plug and b==met for a,b,c in p.evaluate("window.__llamadas"))
+    ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); errs=[]; p.on('pageerror',lambda e:errs.append(str(e)))
+    p.add_init_script(PUENTE_AND); p.goto('http://localhost:8393/'+U); portada(p)
+    ok(p.evaluate("[window.Capacitor.getPlatform(),ANDROID,document.documentElement.classList.contains('en-android')]")==['android',True,True],'android: plataforma detectada')
+    ok(p.locator('.b-apple').count()==0,'android: sin botón de Apple')
+    ok(hay(p,'App','getLaunchUrl'),'android: pide el enlace de arranque (getLaunchUrl)')
+    ok(any(a=='AudioSesion' and b=='barras' and c.get('arriba','').startswith('#') for a,b,c in p.evaluate("window.__llamadas")),'android: pinta las barras del sistema con el color de la página')
+    # Google: Credential Manager con el cliente WEB y sin «scopes»
+    p.evaluate("SB={auth:{signInWithIdToken:async()=>({})}};entraConGoogleNativo().catch(()=>{})"); p.wait_for_timeout(300)
+    ll=p.evaluate("window.__llamadas"); ini=[c for a,b,c in ll if a=='SocialLogin' and b=='initialize']; lg=[c for a,b,c in ll if a=='SocialLogin' and b=='login']
+    ok(bool(ini) and ini[0]['google']['webClientId']=='696175970854-40tmmdnkpqb0gkclc964i72htekg42r5.apps.googleusercontent.com','android: Google se inicia con el cliente web (webClientId)')
+    ok(bool(lg) and 'scopes' not in lg[0]['options'] and bool(lg[0]['options'].get('nonce')) and lg[0]['options'].get('forcePrompt')==True,'android: login de Google sin scopes y con nonce')
+    # botón «atrás»
+    def atras(): p.evaluate("window.__cbs['App.backButton']({canGoBack:false})"); p.wait_for_timeout(150)
+    ok(p.evaluate("typeof window.__cbs['App.backButton']")=='function','android: escucha el botón atrás')
+    p.evaluate("window.__llamadas=[]"); p.evaluate("abrirSheet('<h2>Prueba</h2>')"); ok(p.evaluate("!document.querySelector('#sheet').hidden"),'android: hoja abierta')
+    atras(); ok(p.evaluate("document.querySelector('#sheet').hidden") and not hay(p,'App','exitApp'),'android: atrás cierra la hoja y no cierra la app')
+    p.evaluate("WK.abierto=true;document.querySelector('#wk').hidden=false"); atras(); ok(p.evaluate("!WK.abierto"),'android: atrás cierra el walkie')
+    p.evaluate("ME={code:'ABCDE',pid:'p1',name:'Yo'};S={phase:'play',players:[{id:'p1',name:'Yo'}],hostId:'x',v:1};window.pinta=()=>{}")
+    atras(); ok(p.evaluate("!document.querySelector('#sheet').hidden && document.querySelector('#shBody').innerText.includes('¿Salir de la partida?')"),'android: atrás en plena partida pregunta «¿Salir de la partida?»')
+    ok(not hay(p,'App','exitApp'),'android: atrás en plena partida no cierra la app')
+    ctx.close()
+    ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); errs=[]; p.on('pageerror',lambda e:errs.append(str(e)))
+    p.add_init_script(PUENTE_AND); p.goto('http://localhost:8393/'+U); portada(p)
+    p.evaluate("window.__llamadas=[]"); p.click('[data-a=jugar]'); p.wait_for_timeout(400)
+    p.evaluate("window.__cbs['App.backButton']({canGoBack:false})"); p.wait_for_timeout(300)
+    ok(p.evaluate("!document.querySelector('#nom')") and not hay(p,'App','exitApp'),'android: atrás desde el editor hace lo mismo que «‹ Volver» y no cierra la app')
+    p.evaluate("window.__cbs['App.backButton']({canGoBack:false})"); p.wait_for_timeout(200)
+    ok(hay(p,'App','exitApp'),'android: atrás en la pantalla de inicio sin partida cierra la app')
+    # micrófono denegado al soplar: aviso con «Abrir Ajustes»
+    p.evaluate("(()=>{navigator.mediaDevices.getUserMedia=()=>Promise.reject(Object.assign(new Error('x'),{name:'NotAllowedError'}))})()")
+    p.evaluate("(()=>{window.__el=document.createElement('div');document.body.appendChild(window.__el);JUEGOS.soplar(window.__el,()=>{})})()"); p.click('#gMic'); p.wait_for_selector('#gAjustes')
+    ok('Ajustes → Aplicaciones → Punto Ciego → Permisos → Micrófono' in p.evaluate("window.__el.innerText"),'android: micro denegado al soplar → aviso con la ruta de Android')
+    p.evaluate("window.__llamadas=[]"); p.click('#gAjustes'); p.wait_for_timeout(150)
+    ok(hay(p,'AudioSesion','abrirAjustes'),'android: «Abrir Ajustes» llama a AudioSesion.abrirAjustes')
+    # tienda: Google Play
+    p.evaluate("BLOQUEO={vieja:true};pinta()"); p.wait_for_selector('#bloqueoTienda')
+    ok('Google Play' in p.evaluate("document.querySelector('#bloqueoTienda').innerText"),'android: el botón del aviso de versión dice «Abrir Google Play»')
+    p.evaluate("window.__llamadas=[]"); p.click('#bloqueoTienda'); p.wait_for_timeout(200)
+    ok(['Browser','open',{'url':'https://play.google.com/store/apps/details?id=es.puntostudio.puntociego'}] in p.evaluate("window.__llamadas"),'android: el botón abre la ficha de Google Play')
+    ok(not errs,f'android: sin errores de JS {errs}'); ctx.close()
     # --- web: sin Capacitor, nada cambia ---
     ctx=br.new_context(viewport={'width':390,'height':760},is_mobile=True,has_touch=True); p=ctx.new_page(); errs=[]; p.on('pageerror',lambda e:errs.append(str(e)))
     p.goto('http://localhost:8394/'+U); portada(p)
