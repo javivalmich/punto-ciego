@@ -1,4 +1,4 @@
-# Sala mixta: cuatro móviles con el MISMO APP_V pero distinta REV juegan una partida completa, sin bloqueo y sin errores.
+# Sala mixta (tres partidas completas): cuatro móviles con el MISMO APP_V pero distinta REV juegan una partida completa, sin bloqueo y sin errores.
 # Comprueba también: cada móvil manda su REV, el anfitrión publica la REV mínima de la sala (st.revMin), las funciones nuevas
 # no se activan hasta que todos las tienen, y una acción o un campo que la versión no conoce se ignoran sin fallar.
 # Red: un broker MQTT mínimo en memoria sustituye a los públicos (los móviles lo usan con ?broker=, solo válido en localhost).
@@ -63,10 +63,16 @@ class Broker:
                 elif tipo==12: ws.send(b'\xd0\x00')
         ws.on_message(msg)
 
+# La 1.0.1 de la App Store: el index.html de la rama app antes de existir REV (APP_V=3, sin REV en acciones ni ping)
+VIEJO=subprocess.run(['git','show','af789ae:index.html'],cwd=RAIZ,capture_output=True,check=True).stdout.decode('utf-8')
+assert 'const REV=' not in VIEJO and 'const APP_V=3' in VIEJO
 def monta(ctx,rev,funcs=''):
-    """Sirve index.html con otra REV (y, si se pide, REV_FUNCS): el mismo código hace de móvil «viejo» o «nuevo»."""
+    """Sirve index.html con otra REV (y, si se pide, REV_FUNCS): el mismo código hace de móvil «viejo» o «nuevo».
+    rev=None: sirve el código real de la 1.0.1, que no manda REV."""
     def h(route):
-        r=route.fetch(); t=r.text()
+        r=route.fetch()
+        if rev is None: route.fulfill(response=r,body=VIEJO); return
+        t=r.text()
         t,n=re.subn(r'const REV=\d+;',f'const REV={rev};',t,count=1); assert n==1
         if funcs: t=t.replace('const REV_FUNCS={};',f'const REV_FUNCS={funcs};',1)
         route.fulfill(response=r,body=t)
@@ -92,53 +98,62 @@ BUCLE="""()=>{
    else if(S.meet.fase==='vote'&&!(me.id in S.meet.votes)){const o=S.players.filter(x=>!x.dead&&x.id!==me.id);accion('vote',{target:o[0].id})}
  }
  return S.phase+(BLOQUEO?'!':'')}"""
-try:
-    with sync_playwright() as pw:
-        br=pw.chromium.launch(channel='msedge'); broker=Broker(); errs=[]
-        # anfitrión REV 1; otros: REV 0 (como la 1.0.1), REV 1 y REV 2. Todos con el mismo APP_V.
-        revs=[1,0,1,2]; nombres=['Hugo','Ana','Blas','Carla']
-        ph=movil(br,broker,revs[0],nombres[0],None,errs); ph.wait_for_function("S&&S.phase==='lobby'&&ME.code",timeout=10000)
-        code=ph.evaluate("ME.code"); ps=[ph]
-        for r,n in zip(revs[1:],nombres[1:]):
-            ps.append(movil(br,broker,r,n,code,errs))
-        ph.wait_for_function("S.players.length===4",timeout=15000)
-        for p in ps: p.wait_for_function("S&&mine()",timeout=15000)
-        appv=[p.evaluate("APP_V") for p in ps]
-        ok(len(set(appv))==1 and appv[0]==3,f'los cuatro móviles tienen el mismo APP_V {appv}')
-        ok([p.evaluate("REV") for p in ps]==revs,f'cada móvil tiene su propia REV {revs}')
-        ok(all(p.evaluate("BLOQUEO")is None for p in ps),'ninguno se bloquea por tener otra REV (misma sala)')
-        # el anfitrión conoce la REV de cada uno y la mínima de la sala
-        ph.wait_for_function("S.players.every(x=>Number.isInteger(x.rev))",timeout=15000)
-        porNombre=ph.evaluate("Object.fromEntries(S.players.map(x=>[x.name,x.rev]))")
-        ok(porNombre==dict(zip(nombres,revs)),f'el anfitrión guarda la REV de cada jugador {porNombre}')
-        ph.wait_for_function("S.revMin===0",timeout=10000)
-        for p in ps[1:]: p.wait_for_function("S.revMin===0",timeout=10000)
-        ok(True,'REV mínima de la sala = 0 (hay un móvil con REV 0) en el anfitrión y en los demás')
-        ok([p.evaluate("funcionActiva('probe')") for p in ps]==[False]*4,'una función que pide REV 1 no se activa mientras alguien tiene REV 0')
-        ok(ph.evaluate("funcionActiva('noExiste')")==False,'una función que no está en la tabla nunca se activa')
-        ok(ph.evaluate("[revSala({players:[{rev:1},{rev:2},{bot:true}]}),revSala({players:[{rev:2},{}]}),revSala({players:[{rev:3}]})]")==[1,0,3],'revSala: mínima de las personas; sin REV cuenta como 0; los bots no cuentan')
-        # una acción de una REV que este código no conoce se ignora sin fallar; un campo que no entiende, también
+def partida(br,revs,nombres,etq,esperaMin,detalle=True):
+    """Cuatro móviles (revs[i]: número = REV, None = la 1.0.1 sin REV; el primero es el anfitrión) juegan una partida completa."""
+    broker=Broker(); errs=[]
+    ph=movil(br,broker,revs[0],nombres[0],None,errs); ph.wait_for_function("S&&S.phase==='lobby'&&ME.code",timeout=10000)
+    code=ph.evaluate("ME.code"); ps=[ph]
+    for r,n in zip(revs[1:],nombres[1:]): ps.append(movil(br,broker,r,n,code,errs))
+    ph.wait_for_function("S.players.length===4",timeout=15000)
+    for p in ps: p.wait_for_function("S&&mine()",timeout=15000)
+    appv=[p.evaluate("APP_V") for p in ps]
+    ok(len(set(appv))==1 and appv[0]==3,f'[{etq}] los cuatro móviles tienen el mismo APP_V {appv}')
+    ok([p.evaluate("typeof REV==='undefined'?null:REV") for p in ps]==revs,f'[{etq}] cada móvil tiene su propia REV {revs} (None = 1.0.1, sin REV)')
+    ok(all(p.evaluate("BLOQUEO")is None for p in ps),f'[{etq}] ninguno se bloquea por tener otra REV (misma sala)')
+    ph.wait_for_timeout(4500)   # ping de todos y al menos una publicación del anfitrión
+    for p in ps: p.wait_for_function("S&&S.players.length===4",timeout=10000)
+    if revs[0] is not None:
+        ph.wait_for_function("S.players.every(x=>Number.isInteger(x.rev)||false)||S.players.filter(x=>x.id!==ME.pid).every(x=>x.rev!==undefined||true)",timeout=15000)
+        porNombre=ph.evaluate("Object.fromEntries(S.players.map(x=>[x.name,x.rev===undefined?null:x.rev]))")
+        ok(porNombre==dict(zip(nombres,revs)),f'[{etq}] el anfitrión guarda la REV de cada jugador (None = sin REV, cuenta 0) {porNombre}')
+    minimo=[p.evaluate("S.revMin===undefined?null:S.revMin") for p in ps]
+    if revs[0] is not None:
+        ok(minimo==[esperaMin]*4,f'[{etq}] REV mínima de la sala vista por los cuatro = {esperaMin} {minimo}')
+    else:
+        ok(minimo==[None]*4,f'[{etq}] anfitrión 1.0.1: no publica REV mínima y nadie se confunde {minimo}')
+    ok([p.evaluate("typeof funcionActiva==='function'?funcionActiva('probe'):false") for p in ps]==[False]*4,f'[{etq}] una función que pide REV 1 no se activa mientras alguien no la tiene')
+    if detalle:
+        ok(ph.evaluate("funcionActiva('noExiste')")==False,f'[{etq}] una función que no está en la tabla nunca se activa')
+        ok(ph.evaluate("[revSala({players:[{rev:1},{rev:2},{bot:true}]}),revSala({players:[{rev:2},{}]}),revSala({players:[{rev:3}]})]")==[1,0,3],f'[{etq}] revSala: mínima de las personas; sin REV cuenta como 0; los bots no cuentan')
         ph.evaluate("accion('cfg',{cfg:{killCd:10,disc:0,vote:15,tasks:2,largas:0,emerg:1,walkie:false}})"); ph.wait_for_timeout(500)
         ps[1].evaluate("accion('accionDelFuturo',{x:1,y:[2]})"); ph.wait_for_timeout(800)
-        ok(ph.evaluate("S.phase")=='lobby' and ph.evaluate("S.players.length")==4,'una acción desconocida no rompe la sala')
+        ok(ph.evaluate("S.phase")=='lobby' and ph.evaluate("S.players.length")==4,f'[{etq}] una acción desconocida no rompe la sala')
         ph.evaluate("S.campoDelFuturo={a:1,b:[2,3]};S.players[1].extraFuturo='x';publicarEstado(true)"); ph.wait_for_timeout(1200)
-        ok(all(p.evaluate("!!S&&S.phase==='lobby'&&!BLOQUEO") for p in ps),'un campo desconocido en el estado se conserva y no rompe a nadie')
-        # partida completa
-        ph.click('[data-a=empezar]')
-        for p in ps: p.wait_for_function("S&&S.phase==='play'",timeout=15000)
-        ok(True,'la partida empieza en los cuatro móviles')
-        t0=time.time(); fases=[]
-        while time.time()-t0<120:
-            fases=[p.evaluate(BUCLE) for p in ps]
-            if all(f=='end' for f in fases): break
-            ph.wait_for_timeout(500)
-        ok(all(f=='end' for f in fases),f'la partida llega al final en los cuatro móviles {fases}')
-        ws=[p.evaluate("S.end&&S.end.w") for p in ps]
-        ok(len(set(ws))==1 and ws[0] in ('imp','crew'),f'los cuatro ven el mismo resultado {ws}')
-        ok(all(p.evaluate("!BLOQUEO") for p in ps),'nadie vio la pantalla de bloqueo durante la partida')
-        ok(errs==[],f'sin errores de JavaScript {errs[:3]}')
+        ok(all(p.evaluate("!!S&&S.phase==='lobby'&&!BLOQUEO") for p in ps),f'[{etq}] un campo desconocido en el estado se conserva y no rompe a nadie')
+    else:
+        ph.evaluate("accion('cfg',{cfg:{killCd:10,disc:0,vote:15,tasks:2,largas:0,emerg:1,walkie:false}})"); ph.wait_for_timeout(800)
+    ph.click('[data-a=empezar]')
+    for p in ps: p.wait_for_function("S&&S.phase==='play'",timeout=15000)
+    t0=time.time(); fases=[]
+    while time.time()-t0<120:
+        fases=[p.evaluate(BUCLE) for p in ps]
+        if all(f=='end' for f in fases): break
+        ph.wait_for_timeout(500)
+    ok(all(f=='end' for f in fases),f'[{etq}] la partida llega al final en los cuatro móviles {fases}')
+    ws=[p.evaluate("S.end&&S.end.w") for p in ps]
+    ok(len(set(ws))==1 and ws[0] in ('imp','crew'),f'[{etq}] los cuatro ven el mismo resultado {ws}')
+    ok(all(p.evaluate("!BLOQUEO") for p in ps),f'[{etq}] nadie vio la pantalla de bloqueo durante la partida')
+    ok(errs==[],f'[{etq}] sin errores de JavaScript {errs[:3]}')
+    for p in ps: p.context.close()
+
+try:
+    with sync_playwright() as pw:
+        br=pw.chromium.launch(channel='msedge'); N=['Hugo','Ana','Blas','Carla']
+        partida(br,[1,0,1,2],N,'mixta REV 1/0/1/2',0)
+        partida(br,[None,1,1,2],N,'anfitrión 1.0.1 (sin REV) con invitados nuevos',None,False)
+        partida(br,[1,None,1,2],N,'invitado 1.0.1 (sin REV) con anfitrión nuevo',0,False)
         br.close()
 finally:
     srv.shutdown(); pr.terminate()
-print('\n'+('TODO OK' if not fallos else f'{len(fallos)} FALLOS'))
+print(('TODO OK' if not fallos else f'{len(fallos)} FALLOS'))
 sys.exit(1 if fallos else 0)
