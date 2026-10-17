@@ -2218,7 +2218,7 @@ function bloqueo(){
   if(!BLOQUEO){if(e)e.remove();return}
   if(!e){e=document.createElement('div');e.id='bloqueo';e.setAttribute('role','alertdialog');e.setAttribute('aria-modal','true');document.body.appendChild(e);
     e.addEventListener('click',ev=>{
-      if(ev.target.closest('#bloqueoRecarga'))location.reload();
+      if(ev.target.closest('#bloqueoRecarga'))recargaFuerte(ev.target.closest('#bloqueoRecarga'));
       else if(ev.target.closest('#bloqueoTienda'))abreTienda();
       else if(ev.target.closest('#bloqueoSalir')){BLOQUEO=null;salir()}
     })}
@@ -3775,6 +3775,25 @@ if(ANDROID)try{Promise.resolve(plugin('App').getLaunchUrl()).then(r=>r&&r.url&&a
   if(q&&q===ult&&PERFIL){entrar(q,PERFIL.name,false);return}
   pinta();
 })();
+/* Recarga a fondo: el SW puede seguir sirviendo el index.html viejo, así que busca SW nuevo, vacía las cachés y lo activa antes de recargar */
+async function recargaFuerte(btn){
+  if(btn){btn.disabled=true;btn.textContent='Actualizando…'}
+  const tope=new Promise(r=>setTimeout(r,4000));
+  try{
+    await Promise.race([(async()=>{
+      if('serviceWorker' in navigator){
+        const reg=await navigator.serviceWorker.getRegistration();
+        if(reg){
+          try{await reg.update()}catch(e){}
+          if(reg.waiting)reg.waiting.postMessage('skipWaiting');
+        }
+      }
+      if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}
+      if('serviceWorker' in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}
+    })(),tope]);
+  }catch(e){}
+  location.reload();
+}
 if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   const tenia=!!navigator.serviceWorker.controller;let recargado=false;
   /* Versión nueva instalada: si estás en la portada se recarga sola; en otra pantalla espera a la próxima apertura */
