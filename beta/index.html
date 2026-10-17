@@ -1161,9 +1161,17 @@ function limpiaCfg(c,old){
 /* versión del protocolo de partida: súbela cuando un cambio haga que dos versiones no puedan jugar juntas.
    Todo móvil con otra versión que la de la partida se bloquea con un aviso para recargar (ver bloqueo()) */
 const APP_V=3; /* 3: los jugadores pueden salir a mitad de partida (leave en play/meeting, st.salidos, st.aviso) */
+/* REV: revisión dentro del mismo APP_V. Sube cuando un cambio SOLO AÑADE campos o acciones (los móviles con menos REV los ignoran sin fallar).
+   Una sala acepta a cualquiera con el mismo APP_V, tenga la REV que tenga. Cada móvil manda su REV en cada acción y en el ping;
+   el anfitrión publica en st.revMin la menor de la sala y las funciones nuevas no se activan hasta que todos las tengan (REV_FUNCS).
+   Cuándo sube APP_V y cuándo REV: docs/VERSIONES.md */
+const REV=1; /* 1: primera revisión; 0 = móviles sin esta lógica (la 1.0.1 de las tiendas) */
+const REV_FUNCS={}; /* función nueva -> REV mínima de TODA la sala para activarla. Ej.: {reacciones:2}. Se consulta con funcionActiva('reacciones') */
+const revSala=st=>{let m=Infinity;for(const p of (st&&st.players)||[])if(!p.bot)m=Math.min(m,Number.isInteger(p.rev)&&p.rev>0?p.rev:0);return m===Infinity?REV:m}; /* quien aún no ha mandado REV cuenta como 0 */
+const funcionActiva=f=>!!S&&(S.revMin||0)>=(REV_FUNCS[f]===undefined?Infinity:REV_FUNCS[f]);
 function nuevaPartida(hostId,name,look){
   const now=ahora();look=limpiaLook(look);
-  return {v:1,app:APP_V,hb:now,hostId,gid:uid(6),phase:'lobby',cfg:cfgDefecto('piso'),players:[{id:hostId,name,color:look.hood,look,seen:now}],
+  return {v:1,app:APP_V,hb:now,hostId,gid:uid(6),phase:'lobby',cfg:cfgDefecto('piso'),players:[{id:hostId,name,color:look.hood,look,seen:now,rev:REV}],revMin:REV,
     chat:[],ackd:[],log:[],notice:null,meet:null,sab:null,locks:[],sabCd:0,end:null,...(PRUEBAS?{pruebas:true,pr:{rol:'azar',vel:'normal'}}:{})};
 }
 const maxImp=n=>Math.max(1,Math.floor((n-1)/3));
@@ -1341,6 +1349,7 @@ function salidaPartida(st,p,now){
 /* local: la acción la ha generado este mismo navegador (el anfitrión o sus bots); las que llegan por la red nunca lo son */
 function reducir(st,a,now,local){
   const p=P(st,a.pid),esHost=a.pid===st.hostId;
+  if(p&&!p.bot&&Number.isInteger(a.rev)&&a.rev>=0&&a.rev<1000)p.rev=a.rev; /* REV de ese móvil, venga en la acción que venga */
   if(a.gid&&st.gid&&a.gid!==st.gid&&a.t!=='join'&&a.t!=='ping')return true;   /* acción de otra partida (reenvío tardío): se ignora */
   switch(a.t){
   case 'ping':if(p){p.seen=now;if(a.act!==undefined)p.act=a.act}return false;
@@ -1355,7 +1364,7 @@ function reducir(st,a,now,local){
     if(st.players.some(x=>lc(x.name)===lc(nombre))){let k=2;while(st.players.some(x=>lc(x.name)===lc(nombre+' '+k)))k++;nombre+=' '+k}
     let c=look.hood;if(!libre(c)){c=0;while(!libre(c))c++}
     if(!bot&&st.pruebas){st.pruebas=false;st.pr=null;st.players=st.players.filter(x=>!x.bot)} /* entra una persona: se acabaron las pruebas y se van los bots */
-    st.players.push({id:a.pid,name:nombre,color:c,look,seen:now,...(bot?{bot:true}:{})});return true;
+    st.players.push({id:a.pid,name:nombre,color:c,look,seen:now,...(bot?{bot:true}:Number.isInteger(a.rev)&&a.rev>=0&&a.rev<1000?{rev:a.rev}:{})});return true;
   }
   case 'leave':
     if(!p)return true;
@@ -1369,7 +1378,7 @@ function reducir(st,a,now,local){
   case 'end':if(esHost&&st.phase!=='lobby'){st.phase='end';st.end={w:null,why:'El anfitrión ha terminado la partida',t:now};st.sab=null;st.meet=null}return true;
   case 'lobby':
     if(esHost&&st.phase==='end'){
-      st.players=st.players.map(x=>({id:x.id,name:x.name,color:x.color,look:x.look,seen:x.seen,...(x.bot?{bot:true}:{})}));
+      st.players=st.players.map(x=>({id:x.id,name:x.name,color:x.color,look:x.look,seen:x.seen,...(x.bot?{bot:true}:{}),...(x.rev?{rev:x.rev}:{})}));
       st.phase='lobby';st.meet=null;st.sab=null;st.locks=[];st.end=null;st.notice=null;st.log=[];st.gid=uid(6);
     }return true;
   case 'task':{
@@ -1472,6 +1481,7 @@ function reducir(st,a,now,local){
     if(!st.cfg.walkie)return true;if(!p.dead&&st.phase==='play'&&st.sab&&st.sab.kind==='coms')return true;
     st.chat.push({id:a.id,t:now,pid:p.id,ch:p.dead?'g':'v',txt});if(st.chat.length>60)st.chat=st.chat.slice(-60);return true;
   }
+  default:return true; /* acción que esta versión no conoce (de una REV más nueva): se ignora sin fallar, y se da por atendida para que no se reintente */
   }
   return true;
 }
@@ -1713,7 +1723,7 @@ function publicarEstado(bump,forzar){
   if(S.phase!=='end'){NET.vacio=false;clearTimeout(NET.finT);NET.finT=0}
   else if(NET.vacio)return; /* partida terminada y estado ya borrado de los brokers: no se vuelve a retener */
   else if(!NET.finT)NET.finT=setTimeout(()=>{NET.finT=0;if(S&&S.phase==='end'&&soyHost()){borraRetenido();NET.vacio=true}},30000);
-  if(bump)S.v++;S.hb=ahora();S.app=APP_V;
+  if(bump)S.v++;S.hb=ahora();S.app=APP_V;S.revMin=revSala(S);
   const me=mine();if(me)me.seen=S.hb;
   LS.set('imp.st.'+ME.code,S);
   if(Date.now()<HOST_PAUSA)return;
@@ -1768,7 +1778,7 @@ function aplicar(a,local){
 }
 function accion(t,data={}){
   if(BLOQUEO)return;
-  const a={id:uid(12),pid:ME.pid,gid:S&&S.gid,app:APP_V,t,...data};
+  const a={id:uid(12),pid:ME.pid,gid:S&&S.gid,app:APP_V,rev:REV,t,...data};
   if(soyHost()){aplicar(a,true);return a}
   PEND.set(a.id,{a,n:0});enviar('a',a);return a;
 }
@@ -1781,8 +1791,8 @@ setInterval(()=>{
 setInterval(()=>{
   if(!S||!mine())return;
   const act=miAct();
-  if(soyHost()){const me=mine();me.seen=ahora();me.act=act}
-  else enviar('a',{id:uid(12),pid:ME.pid,app:APP_V,t:'ping',act});
+  if(soyHost()){const me=mine();me.seen=ahora();me.act=act;me.rev=REV}
+  else enviar('a',{id:uid(12),pid:ME.pid,app:APP_V,rev:REV,t:'ping',act});
 },3000);
 setInterval(()=>{if(soyHost()&&tick(S,ahora())){publicarEstado(true);eventos()}},400);
 setInterval(()=>{if(soyHost())publicarEstado(false)},4000);

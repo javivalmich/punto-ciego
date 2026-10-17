@@ -171,6 +171,8 @@ Si cambias `assets/personaje.bin`, `personaje3d.js`, `qr.js` o las imágenes, su
 
 ### Versión de la partida (`APP_V`)
 
+> Hay dos números: `APP_V` (protocolo; bloquea) y `REV` (cambios que solo añaden; no bloquea y las funciones nuevas esperan a toda la sala). Cómo elegir: [docs/VERSIONES.md](docs/VERSIONES.md). `beta/index.html` se genera con `python scripts/generar-beta.py`.
+
 `APP_V` (en `index.html`, junto a `nuevaPartida`) es el número de versión de la partida compartida. Un móvil cuya
 versión no coincide con la de la partida se bloquea con el aviso «Hay una versión nueva, recarga la página».
 
