@@ -8,9 +8,10 @@ const NUEVA='https://puntostudio.es/punto-ciego/';
 const vivo=()=>!(location.hostname==='javivalmich.github.io')?Promise.resolve(false):fetch(NUEVA+'manifest.json',{cache:'no-store'}).then(r=>r.ok).catch(()=>false);
 const ORIGEN_VIEJO=location.hostname==='javivalmich.github.io'; /* en puntostudio.es el destino siempre responde: la mudanza solo se hace desde la dirección antigua */
 const mudar=()=>!ORIGEN_VIEJO?Promise.resolve():Promise.all([caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))),self.registration.unregister()]).then(()=>self.clients.matchAll({type:'window'})).then(cs=>cs.forEach(c=>c.postMessage('mudanza'))).catch(()=>{});
-const VERSION='17';
+const VERSION='24';
 const CACHE='punto-ciego-v'+VERSION;
 const SHELL=['./','index.html','manifest.json','privacidad.html','soporte.html','terminos.html','fonts/outfit-latin.woff2','assets/vendor/supabase-js/supabase.js','assets/logo-ciego.webp','assets/icons/favicon-32.png','assets/icons/icon-192.png','assets/icons/icon-512.png','assets/icons/apple-touch-icon.png'];
+self.addEventListener('message',e=>{if(e.data==='skipWaiting')self.skipWaiting()});
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>Promise.all(SHELL.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))).then(()=>self.skipWaiting()));
 });

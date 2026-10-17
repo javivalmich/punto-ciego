@@ -16,6 +16,8 @@ setTimeout(f,1500)}
 fetch(D+'manifest.json',{cache:'no-store'}).then(function(r){if(r.ok)ir()}).catch(function(){});
 if(navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='mudanza')ir()});
 })();</script>
+<script>/* App nativa (Capacitor): el puente inyecta window.Capacitor sin registerPlugin; se carga el UMD de @capacitor/core (lo copia scripts/preparar-www.mjs a assets/capacitor.js). En la web no se carga nada. */
+if(window.Capacitor&&typeof window.Capacitor.isNativePlatform==='function'&&window.Capacitor.isNativePlatform())document.write('<script src="assets/capacitor.js"><\/script>');</script>
 <meta name="theme-color" content="#0C0C0C">
 <meta name="description" content="Punto Ciego: No puedes confiar en lo que ves. Tareas por las habitaciones de tu casa, sabotajes e impostores, con el móvil.">
 <link rel="manifest" href="manifest.json">
@@ -38,12 +40,15 @@ if(navigator.serviceWorker)navigator.serviceWorker.addEventListener('message',fu
   --disp:Outfit,"Avenir Next",system-ui,sans-serif;
   --txt:Outfit,"Avenir Next",system-ui,-apple-system,"Segoe UI",sans-serif;
   box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{box-sizing:inherit}
-html{overscroll-behavior-y:none;scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--acero);color:var(--tiza);font-family:var(--txt);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
+html,body{overscroll-behavior:none}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--acero);color:var(--tiza);font-family:var(--txt);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:var(--vh,100vh)}
+/* pantallas que caben enteras: sin scroll ni barra (lo decide ajustaScroll); si no caben, se desliza solo lo justo */
+html.sin-scroll,html.sin-scroll body{overflow:hidden;height:var(--vh,100%)}
+body.en-menu main{padding-bottom:16px}
 h1,h2,h3{font-family:var(--disp);font-weight:700;margin:0;line-height:1.08;letter-spacing:-.01em}
 h2{font-size:24px}
 p{margin:.4em 0}
@@ -83,8 +88,8 @@ img[data-pend]{visibility:hidden}
 .fila{display:flex;gap:8px}
 .fila input{flex:1;min-width:0}
 
-#top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--acero);border-bottom:1px solid var(--remache)}
-.tb{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 16px;min-height:52px}
+#top{position:sticky;top:0;padding-top:env(safe-area-inset-top,0px);z-index:9;background:var(--acero);border-bottom:1px solid var(--remache)}
+.tb{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:10px 60px 10px 16px;min-height:52px} /* a la derecha queda el ⚙ fijo (#ajFab) */
 .marca{font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:.06em;display:flex;align-items:center;gap:1px}
 .marca i{display:inline-block;width:13px;height:13px;border-radius:50%;border:2.5px solid var(--tiza);margin:0 5px 0 1px;position:relative}
 .marca i::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--baliza)}
@@ -370,6 +375,9 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 #wkPtt.on{background:var(--baliza);border-color:var(--baliza);color:#fff}
 #wkPtt *{pointer-events:none}
 #wkNivel{position:absolute;left:0;bottom:0;height:6px;width:100%;background:var(--tiza);transform:scaleX(0);transform-origin:left}
+#wkMicOff{border:2px solid var(--alarma);border-radius:12px;padding:8px 12px;margin:8px auto 0;font-size:14px;line-height:1.35}
+#wkMicOff[hidden]{display:none}
+#wkMicOff p{margin:0 0 8px}
 #wkEstado{font-size:14px;color:var(--tiza);margin:8px auto 0;min-height:20px}
 #wkDiag{font-size:12.5px;color:var(--niebla);margin:2px auto 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -383,6 +391,16 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .portada .titulo{font-weight:800;font-size:clamp(46px,15vw,64px);line-height:.98;letter-spacing:.06em;margin:4px 0 10px}
 .titulo i{display:inline-block;width:.74em;height:.74em;border-radius:50%;border:.1em solid var(--tiza);margin:0 0 0 .04em;position:relative;vertical-align:-.02em}
 .titulo i::after{content:"";position:absolute;inset:.13em;border-radius:50%;background:var(--baliza)}
+body.en-portada main{padding:6px 16px 0}
+body.en-portada .portada{padding-top:0}
+body.en-portada .portada .logo{width:min(78vw,300px,21vh);width:min(78vw,300px,21dvh)}
+body.en-portada .portada .titulo{font-size:clamp(34px,min(15vw,6vh),64px);font-size:clamp(34px,min(15vw,6dvh),64px);margin:2px 0 6px}
+body.en-portada .portada .lema{margin:0 0 10px}
+body.en-portada .rasgos{margin:0 auto 14px}
+body.en-portada .rasgos li{padding:9px 12px;font-size:13px}
+body.en-portada .rasgos b{font-size:16px}
+body.en-portada .b-jugar{min-height:56px}
+body.en-portada details.reglas{margin:12px 0 0}
 .portada .lema{margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.14em;text-wrap:balance;padding-left:.14em;text-transform:uppercase;color:var(--niebla)}
 .rasgos{list-style:none;padding:0;margin:4px auto 22px;max-width:360px;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--remache);border:1px solid var(--remache);border-radius:12px;overflow:hidden;text-align:left}
 .rasgos li{background:var(--acero);padding:12px 14px;font-size:14px;color:var(--niebla);line-height:1.3}
@@ -421,7 +439,7 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .clave .ver{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:auto;min-height:44px;padding:0 14px;background:none;border:0;color:var(--niebla);font-size:14px;font-weight:500;text-decoration:underline;text-underline-offset:3px}
 .b-google{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--casco);color:var(--tiza)}
 .b-google svg{flex:0 0 auto}
-.b-apple{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--tiza);color:#000}
+.b-apple{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#000;min-height:48px;border-color:#fff}
 .b-apple svg{flex:0 0 auto}
 .o-sep{display:flex;align-items:center;gap:12px;color:var(--niebla);font-size:14px;margin:14px 0 4px}
 .o-sep::before,.o-sep::after{content:'';flex:1;height:1px;background:var(--remache)}
@@ -450,12 +468,24 @@ button.pulsado.b-alarma:not([disabled]),button.pulsado.b-jugar:not([disabled]){f
 .b-baliza:active:not([disabled]),.b-alarma:active:not([disabled]),.b-jugar:active:not([disabled]),.b-sec:active:not([disabled]),#bar .barra button:active:not([disabled]),button[data-a="unirme"]:active:not([disabled]){transform:translate(4px,4px);box-shadow:none}
 .b-baliza[disabled],.b-alarma[disabled],.b-jugar[disabled],.b-sec[disabled],#bar .barra button[disabled],button[data-a="unirme"][disabled]{box-shadow:none}
 */
+.portada{position:relative}
+/* ⚙ de Ajustes: UN solo botón, fijo y en el mismo sitio en todas las pantallas (arriba a la derecha, en la zona segura). Por encima de las pantallas completas
+   (z 40) y debajo de las hojas (50): nunca tapa botones de la partida (están abajo o a la izquierda) y la cabecera le deja sitio (.tb). */
+#ajFab{position:fixed;top:calc(env(safe-area-inset-top,0px) + 4px);right:calc(env(safe-area-inset-right,0px) + 6px);z-index:45;width:44px;height:44px;padding:0;min-height:0;border-radius:50%;border:1px solid var(--remache);background:var(--acero);color:var(--niebla);font-size:24px;line-height:1;box-shadow:none;opacity:.85}
+#ajFab:active{opacity:1}
+:root[data-theme=light]{--acero:#F3EEE6;--casco:#E9E3D8;--chapa:#DED7CA;--remache:#C3BBAD;--tiza:#161618;--niebla:#5C5850;--baliza:#C71F15;--alarma:#C71F15;--sonar:#2C6A83;--ok:#2E7D4A}
+:root[data-theme=light] .tog.on{color:#fff}
+:root[data-theme=light] .portada .logo{mix-blend-mode:multiply;filter:invert(1) hue-rotate(180deg) brightness(1.12)}
+@media(prefers-color-scheme:light){:root:not([data-theme]){--acero:#F3EEE6;--casco:#E9E3D8;--chapa:#DED7CA;--remache:#C3BBAD;--tiza:#161618;--niebla:#5C5850;--baliza:#C71F15;--alarma:#C71F15;--sonar:#2C6A83;--ok:#2E7D4A}
+:root:not([data-theme]) .tog.on{color:#fff}
+:root:not([data-theme]) .portada .logo{mix-blend-mode:multiply;filter:invert(1) hue-rotate(180deg) brightness(1.12)}}
 </style>
 </head>
 <body>
 <header id="top"></header>
 <main id="app"></main>
 <nav id="bar" hidden></nav>
+<button id="ajFab" data-a="ajustes" aria-label="Ajustes">&#9881;&#xFE0E;</button>
 <div id="over" hidden></div>
 <div id="sheet" hidden><div class="sh-fondo" data-a="cerrarSheet"></div><div class="sh-caja"><button class="sh-cerrar" data-a="cerrarSheet" aria-label="Cerrar">✕</button><div id="shBody"></div><div class="sh-pie" id="shPie"></div></div></div>
 <button id="wkFab" hidden aria-label="Walkie">📻<b id="wkBadge" hidden>0</b></button>
@@ -469,6 +499,7 @@ button.pulsado.b-alarma:not([disabled]),button.pulsado.b-jugar:not([disabled]){f
     <button id="wkPtt"><span id="wkPttTxt">Mantén para hablar</span><i id="wkNivel"></i></button>
     <p id="wkNormas">El chat es entre amigos y no está moderado. Toca ⚑ junto a un mensaje para bloquear o reportar a alguien.</p>
     <p id="wkMicNota">🎤 El micrófono solo se activa mientras mantienes pulsado el botón de hablar. Tu voz se envía al grupo en directo, cifrada, y no se graba ni se guarda. La primera vez, tu móvil te pedirá permiso.</p>
+    <div id="wkMicOff" hidden><p></p><button class="b-sec b-ancho" id="wkAjustes">Abrir Ajustes</button></div>
     <p id="wkEstado"></p>
     <p id="wkDiag"></p>
     <button id="wkVolver" class="b-sec b-ancho" style="margin-top:6px">Volver con walkie abierto</button>
@@ -497,7 +528,28 @@ const LS={get(k,d=null){try{const v=localStorage.getItem(k);return v==null?d:JSO
 function mmss(ms){ms=Math.max(0,ms);const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function b64(u){let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
 function deb64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
-const vibra=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+/* Ajustes de este móvil (portada ⚙): tema, sonido y vibración. Por defecto, tema oscuro (la identidad del juego), sonido y vibración encendidos. */
+const TEMAS=['auto','light','dark'];
+const SET={sound:LS.get('pc.sound',1)!==0,vibra:LS.get('pc.vibra',1)!==0,theme:(t=>TEMAS.includes(t)?t:'dark')(LS.get('pc.theme','dark'))};
+function aplicaTema(t){const r=document.documentElement;if(t==='light'||t==='dark')r.setAttribute('data-theme',t);else r.removeAttribute('data-theme');
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='light'||(t==='auto'&&matchMedia('(prefers-color-scheme: light)').matches)?'#F3EEE6':'#0C0C0C'}
+aplicaTema(SET.theme);
+function setAjuste(k,v){SET[k]=v;LS.set({sound:'pc.sound',vibra:'pc.vibra',theme:'pc.theme'}[k],k==='theme'?v:(v?1:0));if(k==='theme')aplicaTema(v)}
+/* Vibración: SOLO para avisos que llegan a todos los móviles a la vez (ver avisa() en eventos). Ninguna acción individual vibra, así que
+   nadie puede delatar su papel con el móvil en la mano. En la app (iOS no tiene navigator.vibrate) se usa @capacitor/haptics vía
+   window.Capacitor.Plugins.Haptics (sin registerPlugin): vibrate() es un zumbido de duración fija en iPhone, por eso los pulsos se espacian. */
+const hapticos=()=>{try{return(EN_APP&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Haptics)||null}catch(e){return null}};
+const puedeVibrar=()=>EN_APP?!!hapticos():typeof navigator.vibrate==='function';
+function vibraAviso(p){
+  if(!SET.vibra)return;
+  try{
+    const H=hapticos();
+    if(H){let t=0;[].concat(p).forEach((ms,i)=>{
+      if(i%2===0){const golpe=()=>{try{Promise.resolve(H.vibrate({duration:ms})).then(()=>console.log('HAPTIC ok vibrate')).catch(e=>console.log('HAPTIC error '+e))}catch(e){console.log('HAPTIC error '+e)}}; /* registro temporal para Xcode */
+        if(t)setTimeout(golpe,t);else golpe();t+=Math.max(ms,420)}else t+=ms});
+    }else if(!EN_APP&&navigator.vibrate)navigator.vibrate(p);
+  }catch(e){}
+}
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',3200)}
 
 /* ============ datos del juego ============ */
@@ -653,15 +705,42 @@ class Mq{
   pub(topic,payload,retain){if(!this.up)return false;return this.send(packet(0x30|(retain?1:0),[new Uint8Array(mstr(topic)),payload]))}
   close(){this.dead=true;clearInterval(this.ping);clearTimeout(this.rt);clearTimeout(this.tmo);try{this.ws&&this.ws.close()}catch(e){}}
 }
-const DEF_BROKERS=['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://public:public@public.cloud.shiftr.io','wss://mqtt.eclipseprojects.io:443/mqtt'];
-const BROKERS=(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?(new URLSearchParams(location.search).get('broker')||''):'').split(',').filter(Boolean); /* solo en localhost: servidores MQTT de pruebas; en producción un enlace no puede cambiarlos */
+const EN_APP=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+/* Android (misma app Capacitor, WebView de Chrome): plugin AudioSesion propio y mínimo, sin Sign in with Apple, botón «atrás» propio y Google con Credential Manager */
+const ANDROID=EN_APP&&!!window.Capacitor.getPlatform&&window.Capacitor.getPlatform()==='android';
+if(ANDROID)document.documentElement.classList.add('en-android');
+/* Sesión de audio. WKWebView pisa la categoría nativa, así que se fija con navigator.audioSession.type (iOS 16.4+): 'ambient' por defecto (los avisos
+   respetan el interruptor de silencio) y 'play-and-record' mientras algo usa el micro (walkie abierto, pruebas de soplar…); la categoría nativa
+   (plugin AudioSesion) queda de respaldo. El console.log es temporal, para comprobarlo en Xcode. */
+let audioTipo='';const AUDIO_USOS=new Set();
+function audioModo(m){
+  const t=m==='walkie'?'play-and-record':'ambient';
+  try{
+    if(!EN_APP)return;
+    if(navigator.audioSession&&navigator.audioSession.type!==t)navigator.audioSession.type=t;
+    if(audioTipo!==t){audioTipo=t;console.log('AUDIO tipo='+(navigator.audioSession?navigator.audioSession.type:'no disponible (solo nativo)')+' (pedido '+t+')')}
+  }catch(e){console.log('AUDIO tipo error '+e)}
+  try{const A=window.Capacitor.Plugins&&window.Capacitor.Plugins.AudioSesion;if(A)Promise.resolve(A.modo({modo:m})).catch(()=>{})}catch(e){}
+}
+const audioUso=(quien,on)=>{if(on)AUDIO_USOS.add(quien);else AUDIO_USOS.delete(quien);audioModo(AUDIO_USOS.size?'walkie':'ambient')};
+audioModo('ambient');
+/* En la app el WebView se sirve desde capacitor://localhost: sin el !EN_APP, localhost valdría también ahí y los parámetros de pruebas (?pruebas, ?supa, ?broker, ?sblib) tendrían efecto */
+const EN_LOCAL=!EN_APP&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const DEF_BROKERS=['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://public:public@public.cloud.shiftr.io'];
+const BROKERS=(EN_LOCAL?(new URLSearchParams(location.search).get('broker')||''):'').split(',').filter(Boolean); /* solo en localhost: servidores MQTT de pruebas; en producción un enlace no puede cambiarlos */
 if(!BROKERS.length)BROKERS.push(...DEF_BROKERS);
 const NET={cons:[],topic:null,key:null,seen:new Map()};
 async function netStart(code){
   netStop();const k=await claves(code);NET.topic=k.topic;NET.key=k.key;
   NET.cons=BROKERS.map(u=>{const m=new Mq(u,onRaw,c=>{if(c.up&&soyHost())publicarEstado(false);pintaTop();WK.diag()});m.sub(NET.topic+'/#');return m});
 }
-function netStop(){NET.cons.forEach(c=>c.close());NET.cons=[];NET.key=null}
+function netStop(){NET.cons.forEach(c=>c.close());NET.cons=[];NET.key=null;clearTimeout(NET.finT);NET.finT=0;NET.vacio=false}
+/* El estado de la partida se publica con retain=true (para que quien entra lo reciba al momento) y los brokers lo guardan. Un mensaje retenido
+   con payload vacío lo borra: se hace al terminar la partida (tras unos segundos para que todos reciban el final) y al salir el anfitrión. */
+function borraRetenido(cons=NET.cons,topic=NET.topic){
+  if(!topic)return;
+  for(const c of cons)c.pub(topic+'/s',new Uint8Array(0),true);
+}
 const redOk=()=>NET.cons.filter(c=>c.up).length;
 async function enviar(sub,obj,retain){
   if(!NET.key)return 0;const p=await cifra(obj);let ok=0;
@@ -694,7 +773,7 @@ const optK=(tid,step)=>S.gid+'|'+tid+'|'+step;   /* clave ligada a la partida: l
 let JOIN_SENT=false,BUSCA_T=0,HOST_PAUSA=0,ROLVER=false,REVELA=false,VISTO=false,SHEET=null,MODO={m:'menu'},PREV=null;
 let ACT_CONGELADA=null; /* {room,txt,hasta}: última tarea que tuve abierta, sigue contando como "dónde estoy" un rato tras cerrarla */
 
-const urlPartida=()=>location.origin+location.pathname+'?c='+ME.code;
+const urlPartida=()=>(EN_APP?WEB_BASE:location.origin+location.pathname)+'?c='+ME.code; /* en la app, el enlace para compartir y el QR llevan la web pública, no capacitor://localhost */
 const mine=()=>S&&ME.pid?S.players.find(p=>p.id===ME.pid):null;
 const soyHost=()=>!!(S&&ME.pid&&S.hostId===ME.pid);
 const P=(st,id)=>st.players.find(p=>p.id===id);
@@ -730,8 +809,13 @@ const SUPA={
   key:'sb_publishable_gS_zmhigp_Qt-h8jTyQBCg_r9WwTVU9'   // clave publicable: segura en el repo gracias a RLS
 };
 const QS=new URLSearchParams(location.search);
-const PRUEBAS=QS.get('pruebas')==='1'; /* modo pruebas (bots y atajos): sin este parámetro nada de eso existe */
-const EN_LOCAL=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+/* Práctica con bots: la ve cualquiera (invitados incluidos) en la sala de espera cuando está solo. Los atajos de prueba (⚡ Atajos)
+   siguen reservados a cuentas con puede_bots=true en su perfil de Supabase, un indicador que únicamente se cambia desde el servidor
+   (ver supabase/migrations/*_puede_bots.sql). En localhost, además, ?pruebas=1 los activa para los tests; en producción ese
+   parámetro no hace nada. */
+const PRUEBAS_LOCAL=EN_LOCAL&&QS.get('pruebas')==='1';
+const PRUEBAS=true;
+let ATAJOS=PRUEBAS_LOCAL;
 if(EN_LOCAL&&QS.get('supa')){SUPA.url=QS.get('supa');SUPA.key=QS.get('supakey')||''}
 const SB_LIB=(EN_LOCAL&&QS.get('sblib'))||'assets/vendor/supabase-js/supabase.js';
 const CUENTAS=!!(SUPA.url&&SUPA.key);
@@ -739,13 +823,16 @@ let SB=null,USER=null,SB_ESTADO=CUENTAS?'cargando':'off',PERFIL_CARGANDO=false,G
 let ACCESO={modo:'entrar',email:'',pw:'',err:'',msg:'',busy:false};
 let BORRAR={pw:'',palabra:'',err:'',busy:false,ver:false};
 let PERFIL=null;
+/* Modo invitado: sin cuenta, con perfil local (nombre y personaje en este móvil) y sin estadísticas. Todo lo que no depende de la cuenta funciona igual. */
+let INVITADO=!!LS.get('pc.invitado');
+const perfilLocal=()=>{const x=LS.get('pc.perfil');return x&&x.name?{name:x.name,look:limpiaLook(x.look)}:null};
 let GOOGLE=false; /* se activa solo si el proveedor Google está habilitado en Supabase */
-let APPLE=false; /* se activa solo si el proveedor Apple está habilitado en Supabase */
+let APPLE=false; /* se activa solo si el proveedor Apple está habilitado en Supabase y no es Android (el plugin nativo es solo de iOS y el flujo web de Apple no vuelve a la app) */
 if(!CUENTAS){
   PERFIL=LS.get('pc.perfil');
   if(!PERFIL&&LS.get('imp.nombre'))PERFIL={name:LS.get('imp.nombre'),look:{...LOOK0}};
   if(PERFIL)PERFIL.look=limpiaLook(PERFIL.look);
-}
+}else if(INVITADO)PERFIL=perfilLocal();
 function cargaScript(src){return new Promise((ok,ko)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>ko(new Error('no carga '+src));document.head.appendChild(e)})}
 /* ---------- Borrado de cuenta y revocación del token de Apple ----------
    La Edge Function `eliminar-cuenta` revoca el token de Apple (si entró con Apple y hay credenciales) y borra la cuenta.
@@ -757,6 +844,77 @@ async function borrarCuentaRemota(sb){
   }catch(e){}
   const {error:rpcErr}=await sb.rpc('eliminar_mi_cuenta');
   if(rpcErr)throw rpcErr;
+}
+/* App nativa (Capacitor, iOS): Sign in with Apple con el plugin @capacitor-community/apple-sign-in + signInWithIdToken.
+   Los plugins se registran por nombre (jsName nativo: «SignInWithApple», «Browser») con registerPlugin, que aporta assets/capacitor.js (ver arriba). */
+const PLUGINS={};
+const plugin=n=>PLUGINS[n]||(PLUGINS[n]=window.Capacitor.registerPlugin(n));
+const APPLE_BUNDLE_ID='es.puntostudio.puntociego';
+/* Micrófono denegado en la app: aviso con «Abrir Ajustes» (plugin AudioSesion.abrirAjustes, en iOS y en Android). Sin el plugin, solo dice dónde está el permiso. */
+const RUTA_MIC=()=>ANDROID?'Ajustes → Aplicaciones → Punto Ciego → Permisos → Micrófono':'Ajustes → Punto Ciego → Micrófono';
+async function abreAjustesApp(){try{await plugin('AudioSesion').abrirAjustes()}catch(e){toast('Abre '+RUTA_MIC())}}
+const micDenegado=e=>!!(e&&e.name==='NotAllowedError');
+/* En la app la página se sirve desde capacitor://localhost: cualquier enlace que salga del WebView con ese origen se lo queda otra app
+   del móvil que use el mismo esquema, y lo que se comparta o vuelva por correo no sirve fuera. Por eso las páginas externas se abren
+   con @capacitor/browser (navegador del sistema dentro de la app) y con la URL pública, y los enlaces para compartir llevan la web. */
+const WEB_BASE='https://puntostudio.es/punto-ciego/';
+/* Ficha de la app en la App Store (https://apps.apple.com/app/idNNNNNNNNN). Cuando se tenga el ID, se rellena aquí; mientras esté vacío, la pantalla de
+   «Actualiza la app» no ofrece el botón de la tienda (el mensaje sí sale). */
+const APP_STORE_URL='https://apps.apple.com/app/id6822717539';
+const PLAY_STORE_URL='https://play.google.com/store/apps/details?id=es.puntostudio.puntociego'; /* ficha en Google Play (Android) */
+const TIENDA_URL=ANDROID?PLAY_STORE_URL:APP_STORE_URL,TIENDA_NOMBRE=ANDROID?'Google Play':'App Store';
+function abreTienda(){
+  const url=TIENDA_URL;if(!url)return;
+  const fallo=()=>{try{window.open(url,'_system')}catch(y){}};
+  try{Promise.resolve(plugin('Browser').open({url})).catch(fallo)}catch(x){fallo()}
+}
+const LEGAL={privacidad:['/privacidad/','privacidad.html'],terminos:['terminos.html','terminos.html'],soporte:['/soporte/','soporte.html']}; /* [enlace en la web, página pública] */
+const redirigeA=()=>EN_APP?WEB_BASE:location.origin+location.pathname; /* los enlaces de los correos de Supabase se abren fuera de la app: llevan a la web */
+const enlaceLegal=(k,txt,blank)=>`<a href="${LEGAL[k][0]}" data-ext="${WEB_BASE+LEGAL[k][1]}"${blank?' target="_blank" rel="noopener"':''}>${txt}</a>`;
+document.addEventListener('click',e=>{
+  const a=EN_APP&&e.target.closest&&e.target.closest('a[data-ext]');if(!a)return;
+  e.preventDefault();
+  const url=a.dataset.ext,fallo=x=>{console.warn('browser',x);try{window.open(url,'_blank')}catch(y){}};
+  try{Promise.resolve(plugin('Browser').open({url})).catch(fallo)}catch(x){fallo(x)}
+});
+async function sha256Hex(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}
+/* Google nativo en la app: @capgo/capacitor-social-login (jsName «SocialLogin») + signInWithIdToken, con nonce como en Apple.
+   GOOGLE_IOS_ID es el ID de cliente OAuth de tipo iOS (Google Cloud Console, bundle es.puntostudio.puntociego); mientras esté vacío, la app no ofrece Google.
+   Tiene que ser un cliente DISTINTO del web: con el del web, Google rechaza el inicio de sesión nativo. Su esquema inverso (com.googleusercontent.apps.…)
+   debe estar también en CFBundleURLTypes de ios/App/App/Info.plist (lo comprueba tests/google_ios.py).
+   En Android no hace falta ningún ID en el código: Credential Manager usa el cliente WEB (GOOGLE_WEB_ID, como webClientId) y Google comprueba la firma del APK/AAB contra el
+   cliente OAuth de tipo Android (paquete es.puntostudio.puntociego + SHA-1) creado en Google Cloud, ver docs/APP_ANDROID.md.
+   GOOGLE_WEB_ID es el cliente web (el de Supabase, ver supabase/config.toml): se pasa como iOSServerClientId para que el token lleve ese cliente
+   como audiencia y Supabase lo acepte sin depender de «Authorized Client IDs». */
+const GOOGLE_IOS_ID='696175970854-fq2thehvb2qrub3ko7a8icj6e6mlbn41.apps.googleusercontent.com';
+const GOOGLE_WEB_ID='696175970854-40tmmdnkpqb0gkclc964i72htekg42r5.apps.googleusercontent.com';
+let GOOGLE_INI=false;
+function googleCancelado(e){return /USER_CANCELLED|cancel/i.test((e&&(e.code||e.message))||'')}
+async function entraConGoogleNativo(){
+  const sl=plugin('SocialLogin');
+  if(!GOOGLE_INI){await sl.initialize({google:{webClientId:GOOGLE_WEB_ID,iOSClientId:GOOGLE_IOS_ID,iOSServerClientId:GOOGLE_WEB_ID,mode:'online'}});GOOGLE_INI=true}
+  const raw=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
+  /* a Google se le da el nonce con hash; a Supabase, el original. forcePrompt evita que el plugin reutilice una sesión previa de Google (con otro nonce) */
+  /* en Android, pasar «scopes» exige modificar la MainActivity del plugin: se omiten (email y perfil ya van por defecto) */
+  const r=await sl.login({provider:'google',options:{...(ANDROID?{}:{scopes:['email','profile']}),nonce:await sha256Hex(raw),forcePrompt:true}});
+  const tok=r&&r.result&&r.result.idToken;
+  if(!tok)throw new Error('Google no devolvió el token');
+  const {error}=await SB.auth.signInWithIdToken({provider:'google',token:tok,nonce:raw});
+  if(error)throw error;
+}
+function appleCancelado(e){return /1001|cancel/i.test((e&&(e.code||e.message))||'')}
+async function entraConAppleNativo(){
+  const apple=plugin('SignInWithApple');
+  const raw=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');
+  /* a Apple se le da el nonce con hash; a Supabase, el original (así lo verifica contra el token) */
+  const r=await apple.authorize({clientId:APPLE_BUNDLE_ID,redirectURI:SUPA.url+'/auth/v1/callback',scopes:'email name',nonce:await sha256Hex(raw)});
+  const tok=r&&r.response&&r.response.identityToken;
+  if(!tok)throw new Error('Apple no devolvió el token');
+  const {error}=await SB.auth.signInWithIdToken({provider:'apple',token:tok,nonce:raw});
+  if(error)throw error;
+  /* El authorizationCode caduca a los 5 min y vale una vez: se canjea ya en el servidor para poder revocar el token al borrar la cuenta. No bloquea el acceso si falla. */
+  const code=r.response.authorizationCode;
+  if(code)try{await SB.functions.invoke('apple-canjear-codigo',{body:{authorizationCode:code}})}catch(e){console.warn('apple-canjear',e)}
 }
 /* Al entrar con Apple, Supabase da el token de Apple una sola vez: se guarda (solo el servidor puede leerlo) para poder revocarlo al borrar la cuenta */
 function guardaTokenApple(sb,ses){
@@ -775,7 +933,7 @@ async function iniciaCuentas(){
   try{
     await cargaScript(SB_LIB);
     SB=window.supabase.createClient(SUPA.url,SUPA.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-    fetch(SUPA.url+'/auth/v1/settings',{headers:{apikey:SUPA.key}}).then(r=>r.json()).then(j=>{if(j&&j.external){if(j.external.google){GOOGLE=true}if(j.external.apple){APPLE=true}pinta()}}).catch(()=>{});
+    fetch(SUPA.url+'/auth/v1/settings',{headers:{apikey:SUPA.key}}).then(r=>r.json()).then(j=>{if(j&&j.external){if(j.external.google&&(!EN_APP||ANDROID||GOOGLE_IOS_ID)){GOOGLE=true}if(j.external.apple&&!ANDROID){APPLE=true}pinta()}}).catch(()=>{});
     SB.auth.onAuthStateChange((ev,ses)=>{guardaTokenApple(SB,ses);setTimeout(()=>trasSesion(ev,ses),0)});
     const {data}=await SB.auth.getSession();
     await trasSesion('INICIO',data.session);
@@ -790,7 +948,8 @@ async function trasSesion(ev,ses){
   const id=u?u.id:'';
   if(id===SES_ID&&ev!=='INICIO'&&ev!=='USER_UPDATED'){USER=u;return}
   SES_ID=id;USER=u;
-  if(!USER){PERFIL=null;ACCESO.busy=false;pinta();return}
+  if(!USER){PERFIL=INVITADO?perfilLocal():null;fijaBots(false);ACCESO.busy=false;pinta();return}
+  if(INVITADO){INVITADO=false;LS.del('pc.invitado')} /* al entrar con cuenta se acaba el modo invitado */
   await cargaPerfil();
   if(ev==='SIGNED_IN'&&VISTA!=='nuevaClave'&&VISTA!=='borrarCuenta')VISTA='portada';
   ACCESO={modo:'entrar',email:'',pw:'',err:'',msg:'',busy:false};
@@ -804,9 +963,33 @@ async function cargaPerfil(){
     if(error)throw error;
     PERFIL=data?{name:data.username,look:limpiaLook(data.look),stats:{p:data.partidas|0,v:data.victorias|0,i:data.como_impostor|0}}:null;
     if(PERFIL)LS.set('pc.perfil.'+USER.id,PERFIL);
+    if(!data&&LS.get('pc.migrar')){ /* venía de jugar de invitado: la cuenta nueva conserva su nombre y su personaje */
+      const m=perfilLocal();
+      if(m){
+        const {error:e2}=await SB.from('profiles').upsert({id:USER.id,username:m.name,look:m.look,updated_at:new Date().toISOString()});
+        if(!e2){PERFIL={name:m.name,look:m.look,stats:{p:0,v:0,i:0}};LS.set('pc.perfil.'+USER.id,PERFIL)}
+        else if(!EDIT)EDIT={name:m.name,look:{...m.look}}; /* p. ej. nombre ya usado: el editor sale con sus datos para elegir otro */
+      }
+    }
   }catch(e){console.warn('perfil',e);PERFIL=cache?{...cache,look:limpiaLook(cache.look)}:null;if(cache)toast('Sin conexión con las cuentas: uso tu último perfil guardado')}
+  LS.del('pc.migrar');
+  await cargaPuedeBots();
   PERFIL_CARGANDO=false;
   if(PEND_ENTRAR&&PERFIL){const c=PEND_ENTRAR;PEND_ENTRAR=null;LS.del('pc.invita');entrar(c,PERFIL.name,false)}
+}
+/* El indicador se pide aparte y sin caché: si la migración aún no está aplicada o no hay conexión, simplemente no hay bots
+   (y el perfil se carga igual). */
+async function cargaPuedeBots(){
+  let ok=false;
+  try{
+    const {data,error}=await SB.from('profiles').select('puede_bots').eq('id',USER.id).maybeSingle();
+    if(error)throw error;
+    ok=!!(data&&data.puede_bots===true);
+  }catch(e){console.warn('puede_bots',e)}
+  fijaBots(ok);
+}
+function fijaBots(ok){
+  ATAJOS=PRUEBAS_LOCAL||ok;
 }
 function errorCuenta(e){
   const m=((e&&(e.code||''))+' '+(e&&e.message||'')).toLowerCase();
@@ -927,7 +1110,7 @@ function mira(){ /* retícula del logo: tres cuartos claros y uno rojo */
   const R=92,c=105,arc=(a0,a1,col)=>{const r=a=>(a-90)*Math.PI/180,x=a=>c+R*Math.cos(r(a)),y=a=>c+R*Math.sin(r(a));return `<path d="M${x(a0)} ${y(a0)} A${R} ${R} 0 0 1 ${x(a1)} ${y(a1)}" stroke="${col}" stroke-width="9" fill="none"/>`};
   return `<svg class="mira" viewBox="0 0 210 210" aria-hidden="true">${arc(8,82,'#FF4637')}${arc(98,172,'#FF4637')}${arc(188,262,'#F3EEE6')}${arc(278,352,'#F3EEE6')}<path d="M105 0v22M105 188v22M0 105h22M188 105h22" stroke="#F3EEE6" stroke-width="7"/></svg>`;
 }
-const nombreDe=id=>{const p=S&&P(S,id);return p?p.name:'Alguien'};
+const nombreDe=id=>{const p=S&&P(S,id);return p?p.name:(S&&S.salidos&&S.salidos[id]?S.salidos[id].name:'Alguien')};
 /* ============ bloquear y reportar jugadores: sin moderación ni servidor, solo en este móvil ============ */
 const SUPPORT_MAIL='soporte@puntostudio.es';
 const BLK={
@@ -961,7 +1144,7 @@ function pidPara(code){
 function cfgDefecto(venue,prev){
   const V=VENUES[venue]||VENUES.piso;
   const rooms=V.rooms.map((r,i)=>({id:'r'+i,name:r[0],type:r[1],on:i<V.def}));
-  const b=prev?{...prev}:{imp:1,tasks:4,largas:1,killCd:30,disc:60,vote:45,emerg:1,confirm:true,walkie:true,mezcla:'mix',camRoom:''};
+  const b=prev?{...prev}:{imp:1,tasks:4,largas:1,killCd:30,disc:60,vote:45,emerg:1,confirm:true,walkie:false,mezcla:'mix',camRoom:''};
   b.venue=venue in VENUES?venue:'piso';b.rooms=rooms;b.meet='r0';return b;
 }
 /* camRoom: sala (de las activas) que este anfitrión ha elegido para las cámaras; '' = al azar
@@ -979,7 +1162,7 @@ function limpiaCfg(c,old){
 }
 /* versión del protocolo de partida: súbela cuando un cambio haga que dos versiones no puedan jugar juntas.
    Todo móvil con otra versión que la de la partida se bloquea con un aviso para recargar (ver bloqueo()) */
-const APP_V=2;
+const APP_V=3; /* 3: los jugadores pueden salir a mitad de partida (leave en play/meeting, st.salidos, st.aviso) */
 function nuevaPartida(hostId,name,look){
   const now=ahora();look=limpiaLook(look);
   return {v:1,app:APP_V,hb:now,hostId,gid:uid(6),phase:'lobby',cfg:cfgDefecto('piso'),players:[{id:hostId,name,color:look.hood,look,seen:now}],
@@ -1098,11 +1281,11 @@ function ajustaPapel(st,orden){
   if(st.pr.rol==='imp'&&!dentro)orden[Math.floor(Math.random()*orden.length)]=h;
   else if(st.pr.rol==='crew'&&dentro){const o=barajar(st.players.filter(x=>x.id!==h&&!orden.includes(x.id)).map(x=>x.id));if(o.length)orden[orden.indexOf(h)]=o[0]}
 }
-function ganador(st,now){
-  if(st.phase!=='play')return false;
+function ganador(st,now,salida){ /* salida: alguien ha salido de la partida (también cuenta durante una reunión) */
+  if(st.phase!=='play'&&!(salida&&st.phase==='meeting'))return false;
   const vivos=st.players.filter(p=>!p.dead),imps=vivos.filter(p=>p.role==='imp').length,crew=vivos.length-imps;
   let w=null,why='';
-  if(imps===0){w='crew';why='Todos los Puntos han sido expulsados'}
+  if(imps===0){w='crew';why=salida?'El último Punto ha salido de la partida':'Todos los Puntos han sido expulsados'}
   else if(imps>=crew){w='imp';why='Los Puntos ya son tantos como los Ciegos'}
   else{const {hechas,total}=progreso(st);if(total&&hechas>=total){w='crew';why='Los Ciegos han terminado todas las tareas'}}
   if(w){st.phase='end';st.end={w,why,t:now};st.sab=null;st.locks=[];return true}
@@ -1114,7 +1297,7 @@ function reunion(st,now,by,body){
   st.players.forEach(p=>{p.body=false});st.sab=null;st.locks=[];
   st.log.push({t:now,txt:body?`${nombreDe2(st,by)} encontró el cuerpo de ${nombreDe2(st,body)}`:`${nombreDe2(st,by)} convocó una reunión`});
 }
-const nombreDe2=(st,id)=>{const p=P(st,id);return p?p.name:'?'};
+const nombreDe2=(st,id)=>{const p=P(st,id);return p?p.name:(st.salidos&&st.salidos[id]?st.salidos[id].name:'?')};
 /* Saltar el debate: los vivos marcan «Listo para votar» (si lo hacen todos se pasa a votar) o el anfitrión pasa a votar cuando quiere */
 const todosListos=st=>{const m=st.meet,v=st.players.filter(x=>!x.dead);return !!(m&&m.listos&&v.length&&v.every(x=>m.listos[x.id]))};
 function pasaAVotar(st,now,por){
@@ -1128,6 +1311,34 @@ function resolver(st,now){
   m.fase='res';m.until=now+9000;m.res={out,empate:top.length>1,cuenta,imp:false,quedan:0};
   if(out){const p=P(st,out);if(p){p.dead=true;p.ejected=true;p.body=false;m.res.imp=p.role==='imp';st.log.push({t:now,txt:`Expulsado: ${p.name}${p.role==='imp'?' (Punto)':''}`})}}
   m.res.quedan=st.players.filter(x=>!x.dead&&x.role==='imp').length;
+}
+/* Salir de la partida a mitad de juego (play o reunión): el jugador deja de existir para la partida, como eliminado, pero NO como muerto: no hay cuerpo ni fantasma.
+   Sus tareas salen del total (progreso solo cuenta a los jugadores que siguen), su voto desaparece y quien le había votado vuelve a poder votar.
+   Los demás solo ven que ha salido, nunca su papel (queda en st.salidos y solo se enseña en la pantalla final). Si era el anfitrión, el mando pasa al jugador
+   conectado más reciente. Después se mira si la salida acaba la partida (último Punto fuera, o los Puntos igualan a los Ciegos vivos) o hace avanzar la reunión. */
+function salidaPartida(st,p,now){
+  const m=st.meet;
+  (st.salidos||(st.salidos={}))[p.id]={name:p.name,look:p.look,color:p.color,role:p.role,t:now};
+  st.players=st.players.filter(x=>x!==p);
+  if(st.racha)delete st.racha[p.id];
+  if(st.sab&&st.sab.fix)for(const k of Object.keys(st.sab.fix))if(st.sab.fix[k]&&st.sab.fix[k].pid===p.id)delete st.sab.fix[k];
+  if(p.id===st.hostId){
+    const c=st.players.filter(x=>!x.bot).sort((a,b)=>(b.seen||0)-(a.seen||0));
+    if(c.length)st.hostId=c[0].id;
+  }
+  st.log.push({t:now,txt:`${p.name} salió de la partida`});
+  st.aviso={n:(st.aviso?st.aviso.n:0)+1,t:now,txt:`${p.name} ha salido de la partida`};
+  if(m){
+    delete m.votes[p.id];
+    if(m.fase==='vote')for(const k of Object.keys(m.votes))if(m.votes[k]===p.id)delete m.votes[k]; /* quien le votó puede volver a votar */
+    if(m.listos)delete m.listos[p.id];
+  }
+  if(ganador(st,now,true))return;
+  if(st.phase==='meeting'&&m){
+    const vivos=st.players.filter(x=>!x.dead);
+    if(m.fase==='disc'&&todosListos(st))pasaAVotar(st,now,'todos');
+    else if(m.fase==='vote'&&vivos.length&&vivos.every(x=>x.id in m.votes))resolver(st,now);
+  }
 }
 /* local: la acción la ha generado este mismo navegador (el anfitrión o sus bots); las que llegan por la red nunca lo son */
 function reducir(st,a,now,local){
@@ -1149,7 +1360,9 @@ function reducir(st,a,now,local){
     st.players.push({id:a.pid,name:nombre,color:c,look,seen:now,...(bot?{bot:true}:{})});return true;
   }
   case 'leave':
-    if(st.phase!=='lobby'||!p)return true;
+    if(!p)return true;
+    if(st.phase==='play'||st.phase==='meeting'){salidaPartida(st,p,now);return true}
+    if(st.phase!=='lobby')return true;
     st.players=st.players.filter(x=>x!==p);if(esHost&&st.players.length)st.hostId=(st.players.find(x=>!x.bot)||st.players[0]).id;
     if(st.racha)delete st.racha[p.id];return true;
   case 'kick':if(esHost&&st.phase==='lobby'&&a.target!==st.hostId){st.players=st.players.filter(x=>x.id!==a.target);if(st.racha)delete st.racha[a.target]}return true;
@@ -1247,7 +1460,7 @@ function reducir(st,a,now,local){
     if(['azar','crew','imp'].includes(a.rol))r.rol=a.rol;if(a.vel in BOT_VEL)r.vel=a.vel;return true;
   }
   case 'atajo':{ /* modo pruebas: fuerza una situación sin esperar. Solo el anfitrión, en local y en una partida de pruebas */
-    if(!(local&&esHost&&st.pruebas&&soloBots(st)))return true;const m=st.meet;
+    if(!(local&&ATAJOS&&esHost&&st.pruebas&&soloBots(st)))return true;const m=st.meet;
     if(a.k==='reunion'){if(st.phase==='play')reunion(st,now,st.hostId,null)}
     else if(a.k==='debate'){if(st.phase==='meeting'&&m&&m.fase==='disc'){m.fase='vote';m.until=now+st.cfg.vote*1000}}
     else if(a.k==='resolver'){if(st.phase==='meeting'&&m&&m.fase==='vote')resolver(st,now)}
@@ -1288,7 +1501,7 @@ function tick(st,now){
 }
 
 /* ============ modo pruebas: bots ============
-   Solo existe con ?pruebas=1. Los bots viven en el navegador del anfitrión: generan acciones con sus propios ids
+   Solo existe en cuentas con puede_bots (o ?pruebas=1 en localhost). Los bots viven en el navegador del anfitrión: generan acciones con sus propios ids
    (bot-1, bot-2…) y el anfitrión las aplica con el mismo reducer que las de los jugadores reales (aplicar), así que
    cumplen las mismas reglas. Si el anfitrión se desconecta, los bots se paran; nadie los hereda. */
 const BOT_NOMBRES=['Ana','Luis','Marta','Pablo','Lucía','Hugo','Sara','Diego','Noa','Álex','Irene','Mateo','Carla','Iván','Elena'];
@@ -1301,8 +1514,12 @@ const elige=a=>a[Math.floor(Math.random()*a.length)];
 const velBots=()=>BOT_VEL[(S&&S.pr&&S.pr.vel)||'normal']||1;
 const bt=p=>esBot(p)?'<span class="bot-tag">bot</span>':'';
 const enPruebas=()=>!!(PRUEBAS&&S&&S.pruebas&&soyHost()&&soloBots(S));
+const enAtajos=()=>ATAJOS&&enPruebas();
 function botAccion(pid,t,data){aplicar({id:uid(12),pid,t,...data},true)}
-function botAnade(){
+function botAnade(n=1){
+  for(let i=0;i<n;i++)botAnade1();
+}
+function botAnade1(){
   if(!enPruebas()||S.phase!=='lobby'||S.players.length>=15)return;
   let n=1;while(S.players.some(p=>p.id==='bot-'+n))n++;
   const usados=new Set(S.players.map(p=>p.name.toLowerCase())),r=k=>Math.floor(Math.random()*k);
@@ -1495,6 +1712,9 @@ function vAtajos(){
 /* ============ red de la partida ============ */
 function publicarEstado(bump,forzar){
   if(!S||(!soyHost()&&!forzar))return;
+  if(S.phase!=='end'){NET.vacio=false;clearTimeout(NET.finT);NET.finT=0}
+  else if(NET.vacio)return; /* partida terminada y estado ya borrado de los brokers: no se vuelve a retener */
+  else if(!NET.finT)NET.finT=setTimeout(()=>{NET.finT=0;if(S&&S.phase==='end'&&soyHost()){borraRetenido();NET.vacio=true}},30000);
   if(bump)S.v++;S.hb=ahora();S.app=APP_V;
   const me=mine();if(me)me.seen=S.hb;
   LS.set('imp.st.'+ME.code,S);
@@ -1507,7 +1727,7 @@ function mejor(st,cur){
   return st.v===cur.v&&st.hostId===cur.hostId&&st.hb>cur.hb;
 }
 function recibeEstado(st){
-  if(!st||!Array.isArray(st.players))return;
+  if(!ME.code||!st||!Array.isArray(st.players))return; /* sin código ya has salido: el eco de tu propia salida no te devuelve a la partida */
   if(!mejor(st,S))return;
   if(st.app!==APP_V){ /* partida de otra versión (o anterior a este control): no se adopta, se bloquea hasta recargar */
     if(st.hostId===ME.pid)return;
@@ -1539,7 +1759,7 @@ function avisaAjeno(pid){
   /* los móviles que aún no tienen el control de versión solo entienden este aviso: el toast de las notas dirigidas a ellos */
   S.notice={pid,t:ahora(),txt:'Hay una versión nueva: recarga la página'};
   publicarEstado(true);eventos();pinta();
-  if(t-(AVISADOS.get('host')||0)>30000){AVISADOS.set('host',t);toast('Alguien con otra versión intenta jugar: que recargue la página')}
+  if(t-(AVISADOS.get('host')||0)>30000){AVISADOS.set('host',t);toast(EN_APP?'Alguien con otra versión intenta jugar: que actualice la app o recargue la web':'Alguien con otra versión intenta jugar: que recargue la página')}
 }
 function aplicar(a,local){
   HECHAS.add(a.id);
@@ -1577,7 +1797,10 @@ setInterval(()=>{ /* si el anfitrión desaparece, otro coge el mando */
 },1000);
 
 /* ============ sonidos y avisos ============ */
+/* Efectos de sonido apagados en la 1.0: con false, tono() y los avisos de SON no hacen nada (el código se conserva). El walkie no depende de esto. */
+const SFX_ENABLED=false;
 function tono(seq){
+  if(!SFX_ENABLED)return;
   const c=WK.ctx();if(!c)return;let t=c.currentTime+0.02;
   for(const [f,d,type='square',v=0.1] of seq){
     const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;
@@ -1585,28 +1808,34 @@ function tono(seq){
   }
 }
 const SON={
+  cadaver:()=>tono([[300,.22],[300,.22],[300,.22],[210,.5]]),
   reunion:()=>tono([[880,.16],[620,.16],[880,.16],[620,.16],[880,.3]]),
   sabotaje:()=>tono([[230,.32,'sawtooth',.12],[170,.32,'sawtooth',.12],[230,.32,'sawtooth',.12],[170,.4,'sawtooth',.12]]),
-  muerte:()=>tono([[150,.45,'sine',.35],[80,.7,'sine',.35]]),
-  tarea:()=>tono([[660,.08,'triangle',.15],[990,.16,'triangle',.15]]),
   fin:()=>tono([[523,.14,'triangle',.18],[659,.14,'triangle',.18],[784,.34,'triangle',.18]]),
-  votar:()=>tono([[660,.12,'triangle',.18],[880,.12,'triangle',.18],[1100,.24,'triangle',.18]])
+  inicio:()=>tono([[523,.14,'triangle',.18],[659,.14,'triangle',.18],[784,.34,'triangle',.18]]),
+  votacion:()=>tono([[660,.12,'triangle',.18],[880,.12,'triangle',.18],[1100,.24,'triangle',.18]])
 };
+/* Los únicos avisos con sonido y vibración, iguales para todos los móviles a la vez (nada depende del papel de nadie) */
+const VIB={cadaver:[600,200,600,200,600],reunion:[300,120,300,120,300],sabotaje:[500,200,500],inicio:[80,60,80],fin:[100,60,100,60,300],votacion:[200,100,200]};
+function avisa(k){if(SFX_ENABLED&&SET.sound)try{SON[k]()}catch(e){}vibraAviso(VIB[k])}
 function eventos(){
   if(!S||!ME.pid)return;const p=mine(),pr=PREV;
-  PREV={phase:S.phase,mn:S.meet?S.meet.n:0,mf:S.meet?S.meet.fase:'',sab:S.sab?S.sab.kind+S.sab.rooms.join():'',dead:!!(p&&p.dead),gid:S.gid,notice:S.notice?S.notice.t:0};
+  PREV={phase:S.phase,mn:S.meet?S.meet.n:0,mf:S.meet?S.meet.fase:'',sab:S.sab?S.sab.kind+S.sab.rooms.join():'',dead:!!(p&&p.dead),gid:S.gid,notice:S.notice?S.notice.t:0,av:S.aviso?S.aviso.n:0};
   if(pr&&pr.gid!==S.gid){ /* partida nueva: nada del estado local de la anterior sigue vivo */
     OPT.clear();REVELA=false;VISTO=false;ROLVER=false;cerrarSheet();
     for(const [id,q] of PEND)if(q.a.t!=='join')PEND.delete(id);   /* reenvíos pendientes de la partida anterior (el join sí se conserva) */
     if(S.phase!=='lobby'&&WK.abierto)WK.cerrar();
+    if(pr.phase==='lobby'&&S.phase==='play')avisa('inicio');   /* empieza la partida: aviso a todos antes de ver el papel */
   }
   if(!pr||pr.gid!==S.gid)return;
-  if(S.phase==='meeting'&&pr.mn!==PREV.mn){SON.reunion();vibra([300,120,300,120,300]);cerrarSheet();if(WK.abierto)WK.cerrar()}
-  if(S.phase==='meeting'&&pr.mn===PREV.mn&&pr.mf==='disc'&&PREV.mf==='vote'){SON.votar();vibra([200,100,200]);cerrarSheet()}   /* de debate a votación, en todos los móviles a la vez */
-  if(PREV.sab&&PREV.sab!==pr.sab&&p&&p.role!=='imp'){SON.sabotaje();vibra([500,200,500])}
-  if(p&&PREV.dead&&!pr.dead&&S.phase==='play'){SON.muerte();vibra(900);cerrarSheet()}
-  if(S.phase==='end'&&pr.phase!=='end'){SON.fin();cerrarSheet();sumarPartida()}
+  if(S.phase==='meeting'&&pr.mn!==PREV.mn){avisa(S.meet&&S.meet.body?'cadaver':'reunion');cerrarSheet();if(WK.abierto)WK.cerrar()}
+  if(S.phase==='meeting'&&pr.mn===PREV.mn&&pr.mf==='vote'&&PREV.mf==='res'){avisa('votacion');cerrarSheet()}   /* termina la votación: expulsado o no */
+  if(S.phase==='meeting'&&pr.mn===PREV.mn&&pr.mf==='disc'&&PREV.mf==='vote')cerrarSheet();
+  if(PREV.sab&&PREV.sab!==pr.sab)avisa('sabotaje');   /* cualquier sabotaje, también para el impostor */
+  if(p&&PREV.dead&&!pr.dead&&S.phase==='play')cerrarSheet();
+  if(S.phase==='end'&&pr.phase!=='end'){avisa('fin');cerrarSheet();sumarPartida()}   /* termina la partida: igual para todos */
   if(S.notice&&S.notice.pid===ME.pid&&PREV.notice!==pr.notice)toast(S.notice.txt);
+  if(S.aviso&&PREV.av!==pr.av&&ahora()-S.aviso.t<8000)toast(S.aviso.txt);   /* «X ha salido de la partida»: igual para todos, sin papel */
 }
 let WL=null;
 async function despierto(){try{if('wakeLock' in navigator&&document.visibilityState==='visible'&&!WL){WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}}catch(e){}}
@@ -1639,14 +1868,24 @@ function vPortada(){
   return `<section class="portada"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
   <ul class="rasgos"><li><b>Tareas</b>en salas de verdad de tu casa</li><li><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li><b>Un traidor</b>que nadie ha visto venir</li><li><b>Walkie</b>para hablar entre móviles</li></ul>
   <button class="b-jugar" data-a="jugar">Jugar</button>
+  ${CUENTAS&&INVITADO&&!USER?`<p style="text-align:center"><button class="b-link" data-a="aAcceso">Crear cuenta o entrar</button></p>`:''}
   ${reglasHTML()}
-  <p class="legal"><a href="/privacidad/">Privacidad</a> · <a href="terminos.html">Términos</a> · <a href="/soporte/">Soporte</a></p></section>`;
+  <p class="legal">${enlaceLegal('privacidad','Privacidad')} · ${enlaceLegal('terminos','Términos')} · ${enlaceLegal('soporte','Soporte')}</p></section>`;
+}
+/* Ajustes (⚙ fijo, en todas las pantallas): sonido y vibración; el tema solo en la portada. Se guardan en este móvil. */
+function ajustesSheet(){
+  const fila=(a,t,k)=>`<div class="paso"><span>${t}</span><button class="tog ${SET[k]?'on':''}" data-a="${a}" role="switch" aria-checked="${SET[k]}" aria-label="${t}">${SET[k]?'Sí':'No'}</button></div>`;
+  const tema=document.body.classList.contains('en-portada')?`<p class="lbl">Tema</p><div class="chips">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<button class="chip ${SET.theme===v?'on':''}" data-a="ajTema" data-v="${v}" aria-pressed="${SET.theme===v}">${t}</button>`).join('')}</div>
+    <p class="tenue" style="margin-top:6px">Automático sigue el de tu dispositivo.</p>`:'';
+  abrirSheet(`<h2>Ajustes</h2>${tema}
+    ${SFX_ENABLED?fila('ajSonido','Sonido','sound'):''}${puedeVibrar()?fila('ajVibra','Vibración','vibra'):''}
+    <p class="tenue" style="margin-top:10px">Solo ${SFX_ENABLED?'suenan y ':''}vibran los avisos que llegan a todos a la vez: empieza la partida, cuerpo encontrado, reunión de emergencia, sabotajes, fin de la votación y fin de la partida.</p>`);
 }
 function vEditor(){
   const nuevo=!PERFIL,l=limpiaLook(EDIT.look);
   const fila=(t,k,lista,sw)=>`<div class="ed-fila"><p class="lbl">${t}: <b>${esc(sw(l[k]).n)}</b></p><div class="swatches">${lista.map((_,i)=>{const x=sw(i);return `<button class="sw ${l[k]===i?'on':''}" data-a="look" data-k="${k}" data-v="${i}" aria-label="${esc(x.n)}" style="--c:${x.c}">${x.t||''}</button>`}).join('')}</div></div>`;
   return `<section class="bloque"><button class="b-link" data-a="editorVolver">‹ Volver</button><h2>${nuevo?'Crea tu personaje':'Tu personaje'}</h2>
-  <p class="tenue">${PEND_ENTRAR?'Al guardar te unes a la partida a la que te han invitado. ':''}${nuevo?`Así te verán los demás en las partidas. ${CUENTAS?'Se guarda en tu cuenta.':'Se guarda en este móvil.'}`:'Los cambios se verán en tu próxima partida.'}</p>
+  <p class="tenue">${PEND_ENTRAR?'Al guardar te unes a la partida a la que te han invitado. ':''}${nuevo?`Así te verán los demás en las partidas. ${CUENTAS&&USER?'Se guarda en tu cuenta.':'Se guarda en este móvil.'}`:'Los cambios se verán en tu próxima partida.'}</p>
   ${FIG_FALLO?'<p class="motivo">Este navegador no deja pintar el personaje, así que lo verás con los colores de serie. Tu elección se guarda igual y los demás la verán en sus móviles.</p>':''}
   <div class="ed-pegado"><div class="ed-vista">${mira()}${vivo('editor',{look:l,anim:'reposo',w:150,h:196,drag:true,yaw:.35,alt:'Vista previa de tu personaje. Arrástralo para girarlo.'})}</div>
   ${PJ.estado==='fallo'?'':'<p class="ed-tip">Arrastra el personaje para girarlo</p>'}</div>
@@ -1663,7 +1902,7 @@ function vEditor(){
   ${fila('Guantes','glove',GUANTES,i=>({n:GUANTES[i][0],c:GUANTES[i][1]||'#F1ECE3'}))}
   ${fila('Ojos','eye',OJOS,i=>({n:OJOS[i][0],c:OJOS[i][1]||'#F1ECE3'}))}
   <div class="bloque"><button class="b-baliza b-ancho" data-a="guardarPerfil" ${GUARDANDO?'disabled':''}>${GUARDANDO?'Guardando…':nuevo?'Guardar y continuar':'Guardar cambios'}</button>
-  ${nuevo?(CUENTAS&&USER?`<button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:`<button class="b-link" data-a="aPortada">Volver</button>`):`<button class="b-link" data-a="aMenu">Cancelar</button>`}</div></section>`;
+  ${nuevo?(CUENTAS&&USER?`<button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:`<button class="b-link" data-a="${CUENTAS&&INVITADO?'aAcceso':'aPortada'}">Volver</button>`):`<button class="b-link" data-a="aMenu">Cancelar</button>`}</div></section>`;
 }
 const G_LOGO='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 const A_LOGO='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#000" d="M16.365 1.43c0 1.14-.416 2.06-1.25 2.79-.905.79-1.998 1.24-3.017 1.16-.12-1.11.42-2.1 1.24-2.85.86-.79 2.03-1.26 3.02-1.1zM20.6 17.06c-.44 1.02-.96 2.02-1.63 2.94-.9 1.26-1.83 2.5-3.3 2.53-1.44.03-1.9-.86-3.55-.86-1.65 0-2.16.83-3.53.89-1.4.06-2.47-1.36-3.38-2.6C3.42 17.4 2 12.79 3.87 9.66c.93-1.55 2.6-2.53 4.4-2.55 1.38-.03 2.68.93 3.53.93.84 0 2.43-1.15 4.1-.98.7.03 2.66.28 3.92 2.1-.1.06-2.34 1.37-2.32 4.08.03 3.24 2.84 4.32 2.87 4.33-.03.09-.44 1.53-1.47 2.99z"/></svg>';
@@ -1676,8 +1915,9 @@ function vAcceso(){
   return `<section class="portada acc"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">No puedes confiar en lo que ves</p>
   ${PEND_ENTRAR?`<p class="aviso-inv" role="status">Te han invitado a una partida: entra para unirte.</p>`:''}
   <div class="bloque acc-caja"><div class="pestanas"><button class="${crear?'':'on'}" data-a="modoAcceso" data-m="entrar">Entrar</button><button class="${crear?'on':''}" data-a="modoAcceso" data-m="crear">Crear cuenta</button></div>
-  ${GOOGLE?`<button class="b-google b-ancho" data-a="google" ${a.busy?'disabled':''}>${G_LOGO}<span>${crear?'Registrarme con Google':'Entrar con Google'}</span></button>`:''}
-  ${APPLE?`<button class="b-apple b-ancho" data-a="apple" ${a.busy?'disabled':''}>${A_LOGO}<span>${crear?'Registrarme con Apple':'Entrar con Apple'}</span></button>`:''}
+  ${(()=>{const g=GOOGLE?`<button class="b-google b-ancho" data-a="google" ${a.busy?'disabled':''}>${G_LOGO}<span>${crear?'Registrarme con Google':'Entrar con Google'}</span></button>`:'',
+    ap=APPLE?`<button class="b-apple b-ancho" data-a="apple" ${a.busy?'disabled':''}>${A_LOGO}<span>Continuar con Apple</span></button>`:'';
+    return EN_APP?ap+g:g+ap})()}
   ${GOOGLE||APPLE?`<div class="o-sep" aria-hidden="true">o con tu correo</div>`:''}
   <p class="tenue">${crear?'Con tu cuenta tu personaje y tus partidas te siguen a cualquier móvil.':'Entra con el correo y la contraseña de tu cuenta.'}</p>
   <p><label class="lbl" for="em">Correo</label><input id="em" type="email" autocomplete="email" inputmode="email" value="${esc(a.email)}" placeholder="tu@correo.com"></p>
@@ -1685,8 +1925,10 @@ function vAcceso(){
   ${a.err?`<p class="motivo" role="alert">${esc(a.err)}</p>`:''}${a.msg?`<p class="aviso-ok" role="status">${esc(a.msg)}</p>`:''}
   <button class="b-baliza b-ancho" data-a="${crear?'crearCuenta':'entrarCuenta'}" ${a.busy?'disabled':''}>${a.busy?'Un momento…':crear?'Crear cuenta':'Entrar'}</button>
   ${crear?'':`<p style="text-align:center"><button class="b-link" data-a="olvido">He olvidado la contraseña</button></p>`}</div>
+  <div class="bloque"><button class="b-sec b-ancho" data-a="invitado">Jugar sin cuenta</button>
+  <p class="tenue" style="text-align:center;font-size:14px">Tu nombre y tu personaje se guardan solo en este móvil y no hay estadísticas. Puedes crear una cuenta cuando quieras.</p></div>
   ${reglasHTML()}
-  <p class="legal">Al crear una cuenta (mínimo 14 años) aceptas los <a href="terminos.html" target="_blank" rel="noopener">términos y condiciones</a> y la <a href="/privacidad/" target="_blank" rel="noopener">política de privacidad</a>.</p></section>`;
+  <p class="legal">Al crear una cuenta (mínimo 14 años) aceptas los ${enlaceLegal('terminos','términos y condiciones',1)} y la ${enlaceLegal('privacidad','política de privacidad',1)}.</p></section>`;
 }
 function campoBorrar(){
   const ver=!!BORRAR.ver;
@@ -1712,7 +1954,7 @@ function vNuevaClave(){
 function vEsperaCuentas(txt){return `<section class="portada acc" role="status"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br>CIEGO</h1><p class="lema">${txt}</p></section>`}
 function vHome(){
   if(VISTA==='nuevaClave')return vNuevaClave();
-  if(CUENTAS){
+  if(CUENTAS&&!(INVITADO&&!USER)){
     if(SB_ESTADO==='cargando')return vEsperaCuentas('Cargando…');
     if(SB_ESTADO==='error')return `<section class="bloque"><h2>No se puede conectar con las cuentas</h2><p class="tenue">Comprueba la conexión a internet y vuelve a intentarlo.</p><button class="b-baliza b-ancho" data-a="reintentarCuentas">Reintentar</button></section>`;
     if(!USER)return vAcceso();
@@ -1731,11 +1973,11 @@ function vHome(){
   <div class="fila"><input id="cod" class="in-cod" maxlength="5" value="${esc(q)}" placeholder="ABCDE" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="${q?'b-baliza':''}" data-a="unirme">Unirme</button></div></div>
   ${q?`<div class="bloque"><button class="b-link" data-a="crear">Crear una partida nueva</button></div>`:''}
   ${ult?`<div class="bloque"><button class="b-link" data-a="volver" data-c="${esc(ult)}">Volver a la partida ${esc(ult)}</button></div>`:''}
-  ${PRUEBAS?`<div class="bloque"><button class="b-link" data-a="galeria">Galería de minijuegos (pruebas)</button></div>`:''}
-  <p><button class="b-link" data-a="aPortada">Pantalla de inicio</button>${CUENTAS&&USER?` <span class="tenue sep">·</span> <button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:''}</p>
-  <p class="tenue pie">${CUENTAS&&USER?`Sesión iniciada con ${esc(USER.email||'')}.`:'Tu perfil se guarda solo en este móvil.'}</p>
+  ${PRUEBAS_LOCAL?`<div class="bloque"><button class="b-link" data-a="galeria">Galería de minijuegos (pruebas)</button></div>`:''}
+  <p><button class="b-link" data-a="aPortada">Pantalla de inicio</button>${CUENTAS&&USER?` <span class="tenue sep">·</span> <button class="b-link" data-a="salirCuenta">Cerrar sesión</button>`:CUENTAS?` <span class="tenue sep">·</span> <button class="b-link" data-a="aAcceso">Entrar o crear cuenta</button>`:''}</p>
+  <p class="tenue pie">${CUENTAS&&USER?`Sesión iniciada con ${esc(USER.email||'')}.`:INVITADO?'Juegas sin cuenta: tu perfil se guarda solo en este móvil y no hay estadísticas.':'Tu perfil se guarda solo en este móvil.'}</p>
   ${CUENTAS&&USER?`<p><button class="b-link peligro" data-a="aBorrarCuenta">Eliminar cuenta</button></p>`:''}
-  <p class="legal"><a href="/privacidad/" target="_blank" rel="noopener">Privacidad</a> · <a href="terminos.html" target="_blank" rel="noopener">Términos</a> · <a href="/soporte/" target="_blank" rel="noopener">Soporte</a></p>`;
+  <p class="legal">${enlaceLegal('privacidad','Privacidad',1)} · ${enlaceLegal('terminos','Términos',1)} · ${enlaceLegal('soporte','Soporte',1)}</p>`;
 }
 function vBuscando(){
   const lento=Date.now()-BUSCA_T>7000;
@@ -1757,10 +1999,11 @@ function paso(label,k,fmt){
 function vPruebas(){
   const nb=S.players.filter(esBot).length,pr=S.pr||{rol:'azar',vel:'normal'};
   const chips=(a,lista,cur)=>`<div class="chips">${lista.map(([k,t])=>`<button class="chip ${cur===k?'on':''}" data-a="${a}" data-v="${k}">${t}</button>`).join('')}</div>`;
-  return `<section class="bloque prueba"><h2>Pruebas <span class="bot-tag">solo tú lo ves</span></h2>
-  <p class="tenue">Juega solo con bots, que viven en este navegador. Estas partidas no cuentan para tus estadísticas.</p>
+  const lleno=S.players.length>=15;
+  return `<section class="bloque prueba"><h2>Práctica con bots <span class="bot-tag">bots</span></h2>
+  <p class="tenue">Para probar el juego tú solo. Los bots son jugadores simulados (llevan la etiqueta «bot»): se unen, hacen tareas, votan y los Puntos matan y sabotean. Viven en este móvil, se van en cuanto se une una persona y estas partidas no cuentan para tus estadísticas. Hacen falta 4 jugadores para empezar.</p>
   <p class="lbl">${nb} ${nb===1?'bot':'bots'} en la sala</p>
-  <div class="pr-fila"><button data-a="botMas" ${S.players.length>=15?'disabled':''}>Añadir bot</button><button data-a="botQuita" ${nb?'':'disabled'}>Quitar bots</button></div>
+  <div class="pr-fila"><button data-a="botMas3" ${lleno?'disabled':''}>Añadir bots</button><button data-a="botMas" ${lleno?'disabled':''}>+1 bot</button><button data-a="botQuita" ${nb?'':'disabled'}>Quitar bots</button></div>
   <p class="lbl">Mi papel en la próxima partida</p>${chips('prRol',[['azar','Aleatorio'],['crew','Ciego'],['imp','Punto']],pr.rol)}
   <p class="lbl">Velocidad de los bots</p>${chips('prVel',[['lenta','Lenta'],['normal','Normal'],['rapida','Rápida']],pr.vel)}
   <p class="tenue pie">El walkie solo funciona entre personas: los bots no hablan ni escuchan.</p></section>`;
@@ -1872,7 +2115,7 @@ function vJuego(){
     <button class="b-alarma" data-a="fix" data-panel="0">Estoy en ${esc(r.name)}: reparar</button>
     <button data-a="reportar">Reportar cuerpo</button></div>`;
   }
-  if(soyHost())h+=`<p style="margin-top:28px"><button class="b-link" data-a="terminar">Terminar partida</button></p>`;
+  h+=`<p style="margin-top:28px">${soyHost()?`<button class="b-link" data-a="terminar">Terminar partida</button> <span class="tenue sep">·</span> `:''}<button class="b-link" data-a="salirPartida">Salir de la partida</button></p>`;
   return h;
 }
 /* Panel de salas: lo mismo para Ciegos y Puntos (misma estructura, mismos indicadores; los Puntos cuentan
@@ -1899,7 +2142,7 @@ function vBarra(){
 }
 function vReunion(){
   const m=S.meet,p=mine(),t=ahora(),mr=sala(S.cfg.meet)||{name:'el punto de reunión'};
-  const ejectado=m.res&&m.res.out?P(S,m.res.out):null;
+  const ejectado=m.res&&m.res.out?(P(S,m.res.out)||(S.salidos&&S.salidos[m.res.out])):null;
   const cabecera=ejectado
     ?vivo('reunion',{look:ejectado.look,hood:ejectado.color,anim:'expulsado',est:'rojo',k:S.gid+'-eject-'+ejectado.id,w:150,h:190,ph:'espalda',alt:`${ejectado.name} ha sido expulsado`})
     :(()=>{const q=P(S,m.by);return vivo('reunion',{look:q?q.look:LOOK0,hood:q?q.color:BLANCO,anim:'salto',k:S.gid+(m.body?'c':'r'),w:150,h:190,ph:'salta',alt:'Saltando: reunión'})})();
@@ -1922,20 +2165,22 @@ function vReunion(){
     else if(p.id in m.votes){const v=m.votes[p.id];h+=`<p class="dondes">Has votado ${v==='skip'?'saltar':'a <b>'+esc(nombreDe(v))+'</b>'}. Espera al resto.</p>`}
     else h+=`<div class="votos">${S.players.map(x=>x.dead?`<div class="voto muerto">${dot(x)}${esc(x.name)}</div>`:`<button class="voto" data-a="votar" data-p="${x.id}">${dot(x,40)}${esc(x.name)}${bt(x)}</button>`).join('')}<button class="salta" data-a="votar" data-p="skip">Saltar voto</button></div>`;
   }else if(m.res){
-    const r=m.res,out=r.out?P(S,r.out):null;
+    const r=m.res,out=r.out?(P(S,r.out)||(S.salidos&&S.salidos[r.out])):null;
     h+=`<div class="fase"><span>Resultado</span></div>`;
     if(out){h+=`<h2 style="font-size:34px;margin-top:10px">${esc(out.name)} ha sido expulsado.</h2>`;
       if(S.cfg.confirm)h+=`<p class="sub">${r.imp?'Era un Punto.':'No era un Punto.'} ${r.quedan?`Queda${r.quedan>1?'n':''} ${r.quedan} Punto${r.quedan>1?'s':''}.`:''}</p>`}
     else h+=`<h2 style="font-size:34px;margin-top:10px">${r.empate?'Empate: nadie sale.':'Nadie ha sido expulsado.'}</h2>`;
     h+=`<div class="votos">${Object.entries(r.cuenta).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<div class="voto">${k==='skip'?'Saltar':dot(P(S,k)||{color:0})+esc(nombreDe(k))}<span class="n">${n}</span></div>`).join('')}</div>`;
   }
-  return `<div class="ov"><div class="ov-cuerpo">${h}</div>${pie?`<div class="ov-pie">${pie}</div>`:''}<div class="ov-tira"></div></div>`;
+  pie+=`<button class="b-link" data-a="salirPartida">Salir de la partida</button>`; /* siempre en el pie: a la vista sin deslizar, igual para todos */
+  return `<div class="ov"><div class="ov-cuerpo">${h}</div><div class="ov-pie">${pie}</div><div class="ov-tira"></div></div>`;
 }
 function vMuerto(){
   return `<div class="ov ov-muerto"><div class="ov-cuerpo"><div class="ov-franja"></div>${(()=>{const q=mine();return vivo('muerte',{look:q?q.look:LOOK0,hood:q?q.color:BLANCO,anim:'muerte',k:S.gid,w:300,h:190,ph:'agachado',alt:'Tu personaje ha caído'})})()}<h1>Te han matado</h1>
   <p class="sub">Túmbate o siéntate justo donde estás. No hables ni hagas señas hasta que alguien encuentre tu cuerpo y suene la reunión.</p>
   <p class="tenue">Después seguirás jugando como fantasma.</p>
-  <details class="reglas"><summary>Cómo se juega</summary>${REGLAS}</details></div></div>`;
+  <details class="reglas"><summary>Cómo se juega</summary>${REGLAS}</details></div>
+  <div class="ov-pie"><button class="b-link" data-a="salirPartida">Salir de la partida</button></div></div>`;
 }
 function vRevela(){
   const p=mine(),imp=p.role==='imp',socios=S.players.filter(x=>x.role==='imp'&&x.id!==p.id);
@@ -1946,13 +2191,13 @@ function vRevela(){
   return `<div class="ov"><div class="ov-cuerpo fit">${h}</div>${VISTO?`<div class="ov-pie"><button class="b-baliza b-ancho" data-a="entendido">Entendido</button></div>`:''}</div>`;
 }
 function vFin(){
-  const e=S.end||{};const imps=S.players.filter(x=>x.role==='imp');
+  const e=S.end||{};const fuera=Object.values(S.salidos||{});const imps=[...S.players,...fuera].filter(x=>x.role==='imp');
   const q=e.w==='imp'&&imps[0]?imps[0]:mine();
   const cara=e.w?vivo('fin',{look:q?q.look:LOOK0,hood:q?q.color:BLANCO,anim:'victoria',est:e.w==='imp'?'rojo':'',k:S.gid+'-'+e.w,w:190,h:230,ph:e.w==='imp'?'tresq':'feliz',alt:e.w==='imp'?'El Punto celebra':'Los Ciegos celebran'}):pose('frente',150,'',mine());
   let h=`<div class="ov-franja"></div><button class="b-link" data-a="salir">‹ Volver</button>${cara}${e.w?`<h1 class="fin-w ${e.w}">${e.w==='imp'?(imps.length>1?'Ganan los Puntos':'Gana el Punto'):'Ganan los Ciegos'}</h1>`:'<h1>Partida terminada</h1>'}
   <p class="sub">${esc(e.why||'')}</p>
   ${imps.length?`<p class="dondes">${imps.length>1?'Los Puntos eran':'El Punto era'} <b>${imps.map(x=>esc(x.name)).join(' y ')}</b>.</p>`:''}
-  <ul class="gente roles">${S.players.map(x=>`<li>${dot(x)}<span class="${x.role==='imp'?'imp':''}">${esc(x.name)}</span>${bt(x)}<em>${x.role==='imp'?'Punto':'Ciego'}${x.ejected?', expulsado':x.dead?', muerto':''}</em></li>`).join('')}</ul>
+  <ul class="gente roles">${S.players.map(x=>`<li>${dot(x)}<span class="${x.role==='imp'?'imp':''}">${esc(x.name)}</span>${bt(x)}<em>${x.role==='imp'?'Punto':'Ciego'}${x.ejected?', expulsado':x.dead?', muerto':''}</em></li>`).join('')}${fuera.map(x=>`<li>${dot(x)}<span class="${x.role==='imp'?'imp':''}">${esc(x.name)}</span><em>${x.role==='imp'?'Punto':'Ciego'}, salió</em></li>`).join('')}</ul>
   <details class="reglas"><summary>Qué pasó</summary>${(S.log||[]).map(l=>`<p class="log">${mmss(l.t-(S.t0||l.t))} ${esc(l.txt)}</p>`).join('')}</details>`;
   const pie=(soyHost()?`<button class="b-baliza b-ancho" data-a="aLobby">Otra partida con los mismos</button>`:`<p class="tenue" style="margin:0">El anfitrión puede empezar otra partida con el mismo grupo.</p>`)+`<button class="b-link" data-a="salir">Salir</button>`;
   return `<div class="ov"><div class="ov-cuerpo">${h}</div><div class="ov-pie">${pie}</div><div class="ov-tira"></div></div>`;
@@ -1974,8 +2219,21 @@ function bloqueo(){
   let e=$('#bloqueo');
   if(!BLOQUEO){if(e)e.remove();return}
   if(!e){e=document.createElement('div');e.id='bloqueo';e.setAttribute('role','alertdialog');e.setAttribute('aria-modal','true');document.body.appendChild(e);
-    e.addEventListener('click',ev=>{if(ev.target.closest('#bloqueoRecarga'))location.reload()})}
-  const h=`<div class="bq-c"><h1>Hay una versión nueva</h1><p>Recarga la página para seguir jugando.</p>
+    e.addEventListener('click',ev=>{
+      if(ev.target.closest('#bloqueoRecarga'))recargaFuerte(ev.target.closest('#bloqueoRecarga'));
+      else if(ev.target.closest('#bloqueoTienda'))abreTienda();
+      else if(ev.target.closest('#bloqueoSalir')){BLOQUEO=null;salir()}
+    })}
+  /* En la app no sirve recargar (la pantalla del juego va dentro de la app): si la partida es más nueva, hay que actualizar desde la tienda (App Store o Google Play);
+     si es más antigua, quien tiene que actualizar es el anfitrión. En la web se recarga la página, como siempre. */
+  const h=EN_APP
+    ?(BLOQUEO.vieja
+      ?`<div class="bq-c"><h1>Actualiza la app</h1><p>Esta partida usa una versión más reciente de Punto Ciego que la de tu app. Actualízala para seguir jugando.</p>
+        ${TIENDA_URL?`<button class="b-baliza b-ancho" id="bloqueoTienda">Abrir ${ANDROID?'Google Play':'la App Store'}</button>`:''}
+        <button class="b-link" id="bloqueoSalir">Salir de esta partida</button></div>`
+      :`<div class="bq-c"><h1>Versión distinta</h1><p>Esta partida usa una versión más antigua de Punto Ciego que la de tu app: el anfitrión tiene que actualizar la suya.</p>
+        <button class="b-link" id="bloqueoSalir">Salir de esta partida</button></div>`)
+    :`<div class="bq-c"><h1>Hay una versión nueva</h1><p>Recarga la página para seguir jugando.</p>
     <button class="b-baliza b-ancho" id="bloqueoRecarga">Recargar la página</button>
     <p class="tenue">${BLOQUEO.vieja?'Esta partida usa una versión más reciente que la de tu móvil.':'Esta partida usa una versión más antigua: el anfitrión también tiene que recargar la página.'}</p></div>`;
   if(e._h!==h){e._h=h;e.innerHTML=h}
@@ -1995,15 +2253,15 @@ function pinta(){
   }
   const app=$('#app'),bar=$('#bar'),over=$('#over');
   setHTML(app,h);setHTML(bar,b);bar.hidden=!b;setHTML(over,o);over.hidden=!o;
-  document.body.classList.toggle('en-juego',!!b);document.body.classList.toggle('en-over',!!o);
+  document.body.classList.toggle('en-portada',!!app.querySelector('.portada:not(.acc)'));document.body.classList.toggle('en-juego',!!b);document.body.classList.toggle('en-menu',!ME.code&&!!app.querySelector('.perfil'));document.body.classList.toggle('en-over',!!o);
   document.body.classList.toggle('ov-pleno',!!o&&!over.querySelector('.ov-tira'));document.body.classList.toggle('ov-tira',!!o&&!!over.querySelector('.ov-tira'));
   if(b)document.documentElement.style.setProperty('--bar-h',bar.getBoundingClientRect().height+'px');
   $('#wkFab').classList.toggle('solo',!b);
-  const pf=$('#prFab');if(pf){const q=mine();pf.hidden=!(enPruebas()&&q&&(S.phase==='play'||S.phase==='meeting'));pf.classList.toggle('solo',!b)}
+  const pf=$('#prFab');if(pf){const q=mine();pf.hidden=!(enAtajos()&&q&&(S.phase==='play'||S.phase==='meeting'));pf.classList.toggle('solo',!b)}
   if(SHEET&&(SHEET.juego||SHEET.sala)){const p=mine();if(!S||S.phase!=='play'||!p||(p.dead&&p.body))cerrarSheet()}
   if(SHEET&&SHEET.camaras){const p=mine();if(!S||S.phase!=='play'||!p||p.dead)cierraCamaras()}
   if(SHEET&&SHEET.refresh){const el=$('#shVivo');if(el)setHTML(el,SHEET.refresh())}
-  capas();WK.pinta();relojes();aplicaFiguras();
+  capas();ajustaScroll();WK.pinta();relojes();aplicaFiguras();
   if(S&&S.phase==='end'&&CUENTAS&&USER)sumarPartida();
 }
 /* ============ capas: lo que hay debajo de una pantalla completa o una hoja ni se desliza ni se toca ============
@@ -2015,13 +2273,23 @@ let CAPA_Y=null;
 /* altura realmente visible (con la barra de Safari): 100vh en iPhone es la teórica, innerHeight la real */
 function mideVh(){const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;document.documentElement.style.setProperty('--vh',Math.round(h)+'px')}
 mideVh();addEventListener('resize',mideVh);addEventListener('orientationchange',()=>setTimeout(mideVh,200));if(window.visualViewport)visualViewport.addEventListener('resize',mideVh);
+/* portada, menú de jugar y partida en curso: si caben en la pantalla no se deslizan (ni barra ni rebote); si no, se desliza lo justo */
+function ajustaScroll(){
+  const h=document.documentElement,b=document.body;
+  if(CAPA_Y!==null)return;
+  if(!(b.classList.contains('en-portada')||b.classList.contains('en-menu')||b.classList.contains('en-juego'))){h.classList.remove('sin-scroll');return}
+  const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+  const need=$('#top').offsetHeight+$('#app').offsetHeight+(parseFloat(getComputedStyle(h).paddingBottom)||0);
+  h.classList.toggle('sin-scroll',need<=vh+1);
+  if(h.classList.contains('sin-scroll')&&(window.scrollY||h.scrollTop))window.scrollTo(0,0);
+}
 function capas(){
   const bq=!!$('#bloqueo'),sheet=!$('#sheet').hidden,wk=!$('#wk').hidden,ov=!$('#over').hidden;
   const abierta=bq||sheet||wk||ov||!!document.querySelector('.apagon');
   const marca=(el,v)=>{if(!el)return;if(el.inert!==v)el.inert=v;if(v)el.setAttribute('aria-hidden','true');else el.removeAttribute('aria-hidden')};
   const tapa=bq||sheet||wk||ov;
   marca($('#top'),tapa);marca($('#app'),tapa);marca($('#bar'),tapa);
-  marca($('#over'),bq||sheet||wk);marca($('#wk'),bq||sheet);marca($('#sheet'),bq);marca($('#wkFab'),bq||sheet||wk);
+  marca($('#over'),bq||sheet||wk);marca($('#wk'),bq||sheet);marca($('#sheet'),bq);marca($('#wkFab'),bq||sheet||wk);marca($('#ajFab'),bq||sheet||wk);
   const b=document.body,h=document.documentElement;
   if(abierta&&CAPA_Y===null){
     CAPA_Y=window.scrollY||h.scrollTop||0;
@@ -2112,7 +2380,7 @@ function disimular(desde){
   setHTML($('#shVivo'),vHojaTarea(t.id));
 }
 function tareaHecha(tid,step){
-  const p=mine();if(!p||!S)return;SON.tarea();vibra(60);
+  const p=mine();if(!p||!S)return;
   /* primero se fija la hoja en "Hecho" y se apaga SHEET.refresh: si somos el anfitrión, accion() más abajo
      aplica el cambio y repinta en el momento, y sin esto el refresco de la hoja podría borrar #juego (al
      pasar ya al siguiente paso) antes de que termináramos de escribir en él */
@@ -2127,7 +2395,7 @@ function tareaHecha(tid,step){
 function hojaFix(panel,desde){
   const p=mine();if(!S.sab||!p||p.dead)return;const r=sala(S.sab.rooms[panel])||{name:'?'};
   abrirSheet(`<p class="sh-sala">${esc(r.name)}</p><h2>Reparar</h2><p class="tenue">${S.sab.kind==='gas'?'Otra persona tiene que reparar en la otra sala casi a la vez.':'Mantén pulsado para arreglarlo.'}</p><div id="juego"></div>`,{juego:true,fix:true,sala:desde});
-  JUEGOS.hold($('#juego'),()=>{accion('fix',{panel});SON.tarea();$('#juego').innerHTML=`<p class="hecho-ok">Reparado</p>`;setTimeout(()=>{if(SHEET&&SHEET.fix)volverASala()},900)},3000);
+  JUEGOS.hold($('#juego'),()=>{accion('fix',{panel});$('#juego').innerHTML=`<p class="hecho-ok">Reparado</p>`;setTimeout(()=>{if(SHEET&&SHEET.fix)volverASala()},900)},3000);
 }
 /* ============ hoja de una sala: todo lo que puedes hacer ahí ============
    Abrirla cuenta como «estoy en esta sala» (miAct), con la misma ventana de 45 s al cerrarla. */
@@ -2325,7 +2593,7 @@ const JUEGOS={
   hold(el,ok,ms=4500){
     el.innerHTML=`<p class="g-ayuda">Mantén pulsado hasta llenar la barra. Si sueltas, vuelve a empezar.</p><button class="g-hold"><span>Mantener</span><i></i></button>`;
     const b=el.querySelector('.g-hold'),bar=b.querySelector('i');let t0=0,raf=0,fin=false;
-    const loop=()=>{const p=Math.min(1,(Date.now()-t0)/ms);bar.style.transform=`scaleX(${p})`;if(p>=1){fin=true;b.disabled=true;vibra(40);ok();return}raf=requestAnimationFrame(loop)};
+    const loop=()=>{const p=Math.min(1,(Date.now()-t0)/ms);bar.style.transform=`scaleX(${p})`;if(p>=1){fin=true;b.disabled=true;ok();return}raf=requestAnimationFrame(loop)};
     b.onpointerdown=e=>{e.preventDefault();if(fin)return;try{b.setPointerCapture(e.pointerId)}catch(_){}t0=Date.now();cancelAnimationFrame(raf);loop()};
     const suelta=()=>{if(fin)return;cancelAnimationFrame(raf);bar.style.transform='scaleX(0)'};
     b.onpointerup=suelta;b.onpointercancel=suelta;b.oncontextmenu=e=>e.preventDefault();
@@ -2338,7 +2606,7 @@ const JUEGOS={
     const loop=()=>{
       if(!el.isConnected)return;
       const paso=Math.min(1,(Date.now()-t0)/ms);bar.style.transform=`scaleX(${paso})`;txt.textContent=mmss(ms-(Date.now()-t0));
-      if(paso>=1){vibra([120,60,120]);ok();return}
+      if(paso>=1){ok();return}
       requestAnimationFrame(loop);
     };loop();
   },
@@ -2393,7 +2661,7 @@ const JUEGOS={
     el.querySelector('.g-fijar').onpointerdown=e=>{ /* en pointerdown y con la posición que se ve ahora mismo, no recalculada */
       e.preventDefault();if(!vivo)return;
       if(Math.abs(x-zc)<=W/2+TOL){
-        hits++;cta.textContent=hits+' de 3';velObj=Math.min(velObj+.12,.85);vibra(30);
+        hits++;cta.textContent=hits+' de 3';velObj=Math.min(velObj+.12,.85);
         a.classList.add('bien');setTimeout(()=>a.classList.remove('bien'),220);
         colocar();
         if(hits>=3){vivo=false;setTimeout(ok,150)}
@@ -2434,7 +2702,7 @@ const JUEGOS={
       b.style.transform=`translate(${gx*45}px,${gy*45}px)`;
       if(Math.hypot(gx,gy)<0.22)acum+=dt;else acum=Math.max(0,acum-dt*1.4);
       cta.textContent=Math.round(Math.min(1,acum/2.5)*100)+'%';
-      if(acum>=2.5){vivo=false;window.removeEventListener('deviceorientation',on);vibra(40);ok()}
+      if(acum>=2.5){vivo=false;window.removeEventListener('deviceorientation',on);ok()}
     };
     window.addEventListener('deviceorientation',on);
     SHEET.limpia=()=>{vivo=false;window.removeEventListener('deviceorientation',on)};
@@ -2448,7 +2716,7 @@ const JUEGOS={
       const dt=(now-ultimo)/1000;ultimo=now;const d=Math.hypot(bx,by)/R;
       if(activo&&d<0.22)acum+=dt;else acum=Math.max(0,acum-dt*1.4);
       cta.textContent=Math.round(Math.min(1,acum/2.5)*100)+'%';
-      if(acum>=2.5){vivo=false;vibra(40);ok();return}
+      if(acum>=2.5){vivo=false;ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     const mueve=(cx,cy)=>{const r=pista.getBoundingClientRect();bx=Math.max(-R,Math.min(R,cx-(r.left+r.width/2)));by=Math.max(-R,Math.min(R,cy-(r.top+r.height/2)));b.style.transform=`translate(${bx}px,${by}px)`};
@@ -2472,8 +2740,8 @@ const JUEGOS={
       rueda.style.transform=`rotate(${angAcum}rad)`;marcaN.textContent=num();
       const enSentido=dirNec>0?desdeUltima>0.35:desdeUltima<-0.35;
       if(num()===metas[paso]&&enSentido){
-        paso++;desdeUltima=0;dirNec=-dirNec;vibra(25);
-        if(paso>=3){vibra(40);rueda.onpointerdown=rueda.onpointermove=null;setTimeout(ok,150);return}
+        paso++;desdeUltima=0;dirNec=-dirNec;
+        if(paso>=3){rueda.onpointerdown=rueda.onpointermove=null;setTimeout(ok,150);return}
         texto();
       }
     };
@@ -2513,7 +2781,7 @@ const JUEGOS={
     };
     const enlaza=()=>cont.querySelectorAll('.g-tubo').forEach(b=>b.onclick=()=>{
       const r=+b.dataset.r,c=+b.dataset.c;grid[r][c].rot=(grid[r][c].rot+1)%4;cont.innerHTML=dibuja();enlaza();
-      if(conectado()){cont.querySelectorAll('.g-tubo').forEach(x=>{x.disabled=true;x.classList.add('hecho')});vibra(40);setTimeout(ok,300)}
+      if(conectado()){cont.querySelectorAll('.g-tubo').forEach(x=>{x.disabled=true;x.classList.add('hecho')});setTimeout(ok,300)}
     });
     enlaza();
   },
@@ -2535,10 +2803,10 @@ const JUEGOS={
     const idx=(cx,cy)=>{for(const p of pts){const b=p.getBoundingClientRect();if(Math.hypot(cx-(b.left+b.width/2),cy-(b.top+b.height/2))<26)return +p.dataset.i}return -1};
     const marca=i=>{
       if(marcado.includes(i))return;
-      if(seq[marcado.length]!==i){A.textContent='Ese no era. Otra vez.';vibra(30);svg.innerHTML='';pts.forEach(p=>p.classList.remove('on'));trazando=false;setTimeout(muestra,700);return}
+      if(seq[marcado.length]!==i){A.textContent='Ese no era. Otra vez.';svg.innerHTML='';pts.forEach(p=>p.classList.remove('on'));trazando=false;setTimeout(muestra,700);return}
       if(marcado.length){const a=pos(marcado[marcado.length-1]),b=pos(i);svg.insertAdjacentHTML('beforeend',`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="var(--ok)" stroke-width="6" stroke-linecap="round"/>`)}
       marcado.push(i);pts[i].classList.add('on');
-      if(marcado.length===seq.length){trazando=false;vibra(40);setTimeout(ok,250)}
+      if(marcado.length===seq.length){trazando=false;setTimeout(ok,250)}
     };
     cont.onpointerdown=e=>{if(fase!=='dibuja')return;e.preventDefault();trazando=true;const i=idx(e.clientX,e.clientY);if(i>=0)marca(i)};
     cont.onpointermove=e=>{if(!trazando||fase!=='dibuja')return;const i=idx(e.clientX,e.clientY);if(i>=0)marca(i)};
@@ -2561,7 +2829,7 @@ const JUEGOS={
       const dt=(now-ultimo)/1000;ultimo=now;const cerca=Math.abs(+fI.value-fT)<0.35&&Math.abs(+aI.value-aT)<4;
       if(cerca){acum+=dt;cur.setAttribute('stroke',acum>1?'var(--ok)':'var(--sonar)')}else acum=Math.max(0,acum-dt);
       cta.textContent=Math.round(Math.min(1,acum/1.4)*100)+'%';
-      if(acum>=1.4){vivo=false;vibra(40);ok();return}
+      if(acum>=1.4){vivo=false;ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
   },
@@ -2578,7 +2846,7 @@ const JUEGOS={
         const cel=celdas[f*COLS+c];if(!cel.classList.contains('ok')){cel.classList.add('ok');limpias++}
       }
       const pct=Math.round(limpias/total*100);cta.textContent=pct+'%';
-      if(pct>=90){cont.onpointerdown=cont.onpointermove=null;vibra(40);ok()}
+      if(pct>=90){cont.onpointerdown=cont.onpointermove=null;ok()}
     };
     cont.onpointerdown=e=>{e.preventDefault();activo=true;try{cont.setPointerCapture(e.pointerId)}catch(_){}limpia(e.clientX,e.clientY)};
     cont.onpointermove=e=>{if(activo)limpia(e.clientX,e.clientY)};
@@ -2594,13 +2862,13 @@ const JUEGOS={
     const loop=now=>{
       if(!vivo||!el.isConnected)return;
       const dt=(now-ultimo)/1000;ultimo=now;
-      if(activo){nivel+=dt*38;if(nivel>=100){nivel=0;cta.textContent='Se ha derramado. Otra vez.';vibra(60);activo=false;btn.classList.remove('activo')}}
+      if(activo){nivel+=dt*38;if(nivel>=100){nivel=0;cta.textContent='Se ha derramado. Otra vez.';activo=false;btn.classList.remove('activo')}}
       agua.style.height=nivel+'%';requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     btn.onpointerdown=e=>{e.preventDefault();if(!vivo)return;activo=true;btn.classList.add('activo');try{btn.setPointerCapture(e.pointerId)}catch(_){}};
     const suelta=()=>{
       if(!activo)return;activo=false;btn.classList.remove('activo');
-      if(nivel>=lo&&nivel<=hi){vivo=false;vibra(40);cta.textContent='Justo';setTimeout(ok,200)}
+      if(nivel>=lo&&nivel<=hi){vivo=false;cta.textContent='Justo';setTimeout(ok,200)}
       else cta.textContent=nivel<lo?'Aún no llega a la marca':'';
     };
     btn.onpointerup=suelta;btn.onpointercancel=suelta;
@@ -2615,7 +2883,7 @@ const JUEGOS={
     const on=e=>{
       if(!vivo)return;const a=e.accelerationIncludingGravity||e.acceleration;if(!a)return;
       const mag=Math.hypot(a.x||0,a.y||0,a.z||0);
-      if(prev!=null){const jerk=Math.abs(mag-prev);if(jerk>7){nivel=Math.min(1,nivel+jerk/220);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;window.removeEventListener('devicemotion',on);clearInterval(dren);vibra(40);ok();return}}}
+      if(prev!=null){const jerk=Math.abs(mag-prev);if(jerk>7){nivel=Math.min(1,nivel+jerk/220);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;window.removeEventListener('devicemotion',on);clearInterval(dren);ok();return}}}
       prev=mag;
     };
     window.addEventListener('devicemotion',on);
@@ -2625,7 +2893,7 @@ const JUEGOS={
   _agitarT(el,ok){
     el.innerHTML=`<p class="g-ayuda">Sin sensor de movimiento: toca rápido para llenar la barra.</p><button class="g-hold" id="gB"><span>Toca rápido</span><i id="gBar"></i></button>`;
     const btn=el.querySelector('#gB'),bar=el.querySelector('#gBar');let nivel=0,vivo=true;
-    btn.onpointerdown=e=>{e.preventDefault();if(!vivo)return;nivel=Math.min(1,nivel+.11);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;clearInterval(dren);vibra(40);ok()}};
+    btn.onpointerdown=e=>{e.preventDefault();if(!vivo)return;nivel=Math.min(1,nivel+.11);bar.style.transform=`scaleX(${nivel})`;if(nivel>=1){vivo=false;clearInterval(dren);ok()}};
     const dren=setInterval(()=>{if(!vivo)return;nivel=Math.max(0,nivel-.025);bar.style.transform=`scaleX(${nivel})`},200);
     SHEET.limpia=()=>{vivo=false;clearInterval(dren)};
   },
@@ -2636,9 +2904,11 @@ const JUEGOS={
     el.querySelector('#gTap').onclick=()=>JUEGOS._soplarT(el,ok);
     el.querySelector('#gMic').onclick=()=>{
       el.innerHTML=`<p class="g-ayuda">Comprobando el micro…</p>`;
+      audioUso('soplar',true);   /* play-and-record mientras dura la prueba: el micro funciona también con el iPhone en silencio */
       navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-        if(!el.isConnected){stream.getTracks().forEach(t=>t.stop());return}JUEGOS._soplarS(el,ok,stream);
-      }).catch(()=>{if(el.isConnected)JUEGOS._soplarT(el,ok)});
+        if(!el.isConnected){stream.getTracks().forEach(t=>t.stop());audioUso('soplar',false);return}JUEGOS._soplarS(el,ok,stream);
+      }).catch(e=>{audioUso('soplar',false);if(!el.isConnected)return;JUEGOS._soplarT(el,ok);
+        if(EN_APP&&micDenegado(e)){el.insertAdjacentHTML('afterbegin',`<p class="g-ayuda">Has desactivado el micrófono: puedes seguir tocando la pantalla, o activarlo en ${RUTA_MIC()}.</p><button class="b-sec b-ancho" id="gAjustes" style="margin-bottom:8px">Abrir Ajustes</button>`);el.querySelector('#gAjustes').onclick=abreAjustesApp}});
     };
   },
   _soplarS(el,ok,stream){
@@ -2646,14 +2916,14 @@ const JUEGOS={
     const vaho=el.querySelector('#gV'),cta=el.querySelector('#gC');
     const C=window.AudioContext||window.webkitAudioContext,ctx=new C(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();
     an.fftSize=512;src.connect(an);const buf=new Uint8Array(an.fftSize);let nivel=0,vivo=true;
-    const parar=()=>{try{ctx.close()}catch(e){}try{stream.getTracks().forEach(t=>t.stop())}catch(e){}};
+    const parar=()=>{try{ctx.close()}catch(e){}try{stream.getTracks().forEach(t=>t.stop())}catch(e){}audioUso('soplar',false)};
     const loop=()=>{
       if(!vivo||!el.isConnected)return;
       an.getByteTimeDomainData(buf);let suma=0;for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;suma+=v*v}
       const rms=Math.sqrt(suma/buf.length);
       if(rms>0.09)nivel=Math.min(1,nivel+0.02);else nivel=Math.max(0,nivel-0.01);
       vaho.style.opacity=1-nivel;cta.textContent=Math.round(nivel*100)+'%';
-      if(nivel>=1){vivo=false;parar();vibra(40);ok();return}
+      if(nivel>=1){vivo=false;parar();ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     SHEET.limpia=()=>{vivo=false;parar()};
@@ -2665,7 +2935,7 @@ const JUEGOS={
       if(!vivo||!el.isConnected)return;const dt=(now-ultimo)/1000;ultimo=now;
       if(activo)nivel=Math.min(1,nivel+dt*.5);else nivel=Math.max(0,nivel-dt*.3);
       vaho.style.opacity=1-nivel;
-      if(nivel>=1){vivo=false;vibra(40);ok();return}
+      if(nivel>=1){vivo=false;ok();return}
       requestAnimationFrame(loop);
     };requestAnimationFrame(loop);
     btn.onpointerdown=e=>{e.preventDefault();activo=true;try{btn.setPointerCapture(e.pointerId)}catch(_){}};
@@ -2681,7 +2951,7 @@ const JUEGOS={
       if(abiertas.length===2){bloq=true;
         if(abiertas[0].dataset.e===abiertas[1].dataset.e){
           abiertas.forEach(x=>x.classList.add('hecho'));encontradas++;abiertas=[];bloq=false;
-          if(encontradas===4){vibra(40);setTimeout(ok,300)}
+          if(encontradas===4){setTimeout(ok,300)}
         }else setTimeout(()=>{abiertas.forEach(x=>{x.textContent='?';x.classList.remove('on')});abiertas=[];bloq=false},700);
       }
     });
@@ -2697,8 +2967,8 @@ const JUEGOS={
       const t0=performance.now();
       const paso=now=>{if(!b.isConnected)return;const p=Math.min(1,(now-t0)/dur);b.style.left=(derecha?-8+p*116:108-p*116)+'%';if(p<1)requestAnimationFrame(paso);else fuera()};requestAnimationFrame(paso);
       const fuera=()=>{if(b.isConnected)b.remove();vivos=vivos.filter(x=>x!==b);if(vivo)nueva()};
-      b.onpointerdown=e=>{e.preventDefault();if(!b.isConnected)return;b.remove();vivos=vivos.filter(x=>x!==b);cazadas++;cta.textContent=cazadas+' de 6';vibra(20);
-        if(cazadas>=6){vivo=false;vivos.forEach(x=>x.remove());vivos=[];vibra(40);setTimeout(ok,200);return}
+      b.onpointerdown=e=>{e.preventDefault();if(!b.isConnected)return;b.remove();vivos=vivos.filter(x=>x!==b);cazadas++;cta.textContent=cazadas+' de 6';
+        if(cazadas>=6){vivo=false;vivos.forEach(x=>x.remove());vivos=[];setTimeout(ok,200);return}
         nueva();
       };
     };
@@ -2998,6 +3268,7 @@ const WK={
   },
   oye(ch){const p=mine();if(!p)return false;if(ch==='g')return !!p.dead;return !this.atasco()},
   estado(t){$('#wkEstado').textContent=t||''},
+  avisoMic(on){const b=$('#wkMicOff');if(!b)return;if(on)b.querySelector('p').textContent='Has desactivado el micrófono. Actívalo en '+RUTA_MIC()+' para hablar por el walkie. Los mensajes de texto siguen funcionando.';b.hidden=!on},
   diag(){
     const n=redOk(),tot=NET.cons.length;
     let t=tot?`Conexión: ${n} de ${tot} servidores${n?'':' (sin red)'}`:'';
@@ -3013,7 +3284,7 @@ const WK={
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('este navegador no deja usar el micro');
     const g=this.gen,s=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     if(g!==this.gen){s.getTracks().forEach(t=>{try{t.stop()}catch(e){}});const e=new Error('micro soltado');e.soltado=true;throw e}
-    this.stream=s;this.src=null;
+    this.stream=s;this.src=null;this.avisoMic(false);
     LS.set('imp.micok',1);$('#wkMicNota').hidden=true;
   },
   /* suelta el micro de verdad (el punto naranja de iOS desaparece) y cierra el audio; se vuelve a abrir al pedirlo */
@@ -3028,16 +3299,19 @@ const WK={
   vigila(){
     const a=this.atasco(),c=this.cerrado();
     if((a||c)&&this.stream){if(a)this.reco=true;this.suelta()}
-    if(!a&&this.reco){this.reco=false;if(!c&&!this.off&&S&&mine()){this.ctx();this.micro().then(()=>this.diag()).catch(e=>{if(!e.soltado)this.estado('Toca para activar el micro')})}}
+    if(!a&&this.reco){this.reco=false;if(!c&&!this.off&&S&&mine()&&this.abierto){this.ctx();this.micro().then(()=>this.diag()).catch(e=>{if(!e.soltado)this.estado('Toca para activar el micro')})}}
   },
   desconectar(){this.off=true;this.reco=false;this.suelta();this.cerrar()},
   async empieza(){
     const no=this.noPuede();if(no){this.estado(no);return}
-    if(this.rec)return;const c=this.ctx();
+    if(this.rec)return;
+    if(!redOk()){this.estado('Sin conexión con el servidor del walkie: reintentando…');this.diag();return}
+    const c=this.ctx();
     const r=this.rec={id:uid(10),n:0,ch:this.canal(),t0:Date.now(),pico:0,partes:[],arrancando:true};
     this.btn(true);this.estado('Abriendo micro…');
     try{await this.micro()}catch(e){if(this.rec===r)this.rec=null;this.btn(false);this.nivel(0);
       if(e.soltado){this.diag();return}
+      if(EN_APP&&micDenegado(e)){this.avisoMic(true);this.estado('');this.diag();return}
       this.estado(this.inapp()?'Aquí el micro está bloqueado: abre la web en Chrome o Safari':e.name==='NotAllowedError'?'Toca para activar el micro. Si no te pide permiso, actívalo en los ajustes del navegador.':'No hay acceso al micro: '+(e.message||e.name));this.diag();return}
     if(this.rec!==r)return;
     r.arrancando=false;r.t0=Date.now();this.ruido(.07,.1);this.diag();
@@ -3079,7 +3353,7 @@ const WK={
     if(r.mr){try{r.mr.stop()}catch(e){}}
     else{this.paraSP(r);this.trozo(r,(r.buf||[]).splice(0),true);
       const tot=r.partes.reduce((a,x)=>a+x.length,0);if(tot>800){const pcm=new Float32Array(tot);let o=0;for(const x of r.partes){pcm.set(x,o);o+=x.length}this.voces.push({t:ahora(),pid:ME.pid,ch:r.ch,pcm,dur:tot/8000});}}
-    this.ruido(.07,.1);this.estado('Enviado');setTimeout(()=>{if(!this.rec)this.estado('')},1500);this.pinta();
+    const sinRed=!redOk();this.ruido(.07,.1);this.estado(sinRed?'No se pudo enviar: sin conexión con el servidor':'Enviado');setTimeout(()=>{if(!this.rec)this.estado('')},sinRed?4000:1500);this.pinta();
   },
   subir(pcm){const c=this.ctx(),sr=c.sampleRate,n=Math.max(1,Math.floor(pcm.length*sr/8000)),b=c.createBuffer(1,n,sr),d=b.getChannelData(0),k=8000/sr;
     for(let i=0;i<n;i++){const x=i*k,i0=Math.floor(x),f=x-i0;d[i]=(pcm[i0]||0)*(1-f)+(pcm[i0+1]||pcm[i0]||0)*f}return b},
@@ -3145,10 +3419,13 @@ const WK={
       :'<p class="wk-vacio">'+pose('movil',96)+'Aún no ha hablado nadie. Mantén el botón para hablar o escribe abajo.</p>';
     const L=$('#wkLista');if(L._h!==h){const abajo=L.scrollHeight-L.scrollTop-L.clientHeight<40;L._h=h;L.innerHTML=h;if(abajo||!L._ini){L.scrollTop=L.scrollHeight;L._ini=true}}
   },
-  abrir(){this.abierto=true;this.off=false;$('#wk').hidden=false;capas();this.ctx();this.diag();$('#wkLista')._ini=false;this.pinta()},
-  cerrar(){this.abierto=false;$('#wk').hidden=true;capas();if(this.rec)this.para(true);this.pinta()},
+  abrir(){audioUso('walkie',true);if(this.stream){const v=this.stream;this.stream=null;this.src=null;this.gen++;v.getTracks().forEach(t=>{try{t.stop()}catch(e){}})}   /* el micro se pide de nuevo ya en play-and-record: uno abierto antes en ambient quedaría mudo con el iPhone en silencio */
+    this.abierto=true;this.off=false;$('#wk').hidden=false;capas();this.ctx();this.diag();$('#wkLista')._ini=false;this.pinta()},
+  cerrar(){this.abierto=false;audioUso('walkie',false);$('#wk').hidden=true;capas();if(this.rec)this.para(true);this.pinta()},
   init(){
     $('#wkFab').onclick=()=>this.abrir();$('#wkCerrar').onclick=()=>this.cerrar();$('#wkVolver').onclick=()=>this.cerrar();$('#wkDesc').onclick=()=>this.desconectar();$('#wkFondo').onclick=()=>this.cerrar();
+    $('#wkAjustes').onclick=abreAjustesApp;
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#wkMicOff').hidden){this.avisoMic(false);this.estado('')}}); /* al volver de Ajustes se quita el aviso: el siguiente intento de hablar lo vuelve a pedir */
     const mandar=()=>{const i=$('#wkTxt'),t=i.value.trim();if(!t||this.noPuede())return;accion('chat',{txt:t});i.value=''};
     $('#wkEnviar').onclick=mandar;$('#wkTxt').onkeydown=e=>{if(e.key==='Enter')mandar()};
     const b=$('#wkPtt');let abajo=0,tocaParar=false;
@@ -3166,20 +3443,22 @@ const WK={
 };
 
 /* ============ acciones de la interfaz ============ */
-const qsExtra=()=>[PRUEBAS?'pruebas=1':''].filter(Boolean);
+const qsExtra=()=>[PRUEBAS_LOCAL?'pruebas=1':''].filter(Boolean);
 async function entrar(code,name,crear){
   ME={code,pid:pidPara(code),name};LS.set('imp.pid.'+code,ME.pid);LS.set('imp.ultima',code);
   JOIN_SENT=false;PEND.clear();OPT.clear();PREV=null;OFF=0;OFFS=[];S=null;BUSCA_T=Date.now();HECHAS=new Set();
   if(crear){S=nuevaPartida(ME.pid,name,PERFIL&&PERFIL.look)}
   else{const g=LS.get('imp.st.'+code);if(g&&g.hostId===ME.pid)S=g}
-  if(S&&S.hostId===ME.pid&&PRUEBAS&&S.phase==='lobby'&&!S.pruebas){S.pruebas=true;S.pr={rol:'azar',vel:'normal'}}
+  if(S&&S.hostId===ME.pid&&PRUEBAS&&S.phase==='lobby'&&!S.pruebas&&soloBots(S)){S.pruebas=true;S.pr={rol:'azar',vel:'normal'}}
   if(new URLSearchParams(location.search).get('c')!==code){try{history.replaceState(null,'','?c='+code+qsExtra().map(x=>'&'+x).join(''))}catch(e){}}
   pinta();await netStart(code);
   if(soyHost()){HECHAS=new Set(S.ackd||[]);publicarEstado(true)}
   despierto();pinta();
 }
 function salir(){
-  if(S&&mine()&&S.phase==='lobby'){const a=accion('leave');if(a)setTimeout(()=>enviar('a',a),250)} /* salida a propósito: se avisa dos veces y el anfitrión la aplica y publica al momento */
+  /* si queda alguien, quien coja el mando vuelve a publicar. Va tras la salida (que publica el estado sin el anfitrión, y cifrar es asíncrono) y antes de cerrar las conexiones */
+  if(soyHost()){const cons=NET.cons,topic=NET.topic;setTimeout(()=>borraRetenido(cons,topic),450)}
+  if(S&&mine()&&(S.phase==='lobby'||S.phase==='play'||S.phase==='meeting')){const a=accion('leave');if(a)setTimeout(()=>enviar('a',a),250)} /* salida a propósito: se avisa dos veces y el anfitrión la aplica y publica al momento */
   const code=ME.code,cons=NET.cons;setTimeout(()=>{if(NET.cons===cons)netStop()},600);
   ME={code:null,pid:null,name:ME.name};S=null;VISTA='menu';PEND.clear();cerrarSheet();WK.cerrar();WK.reco=false;WK.suelta();LS.del('imp.ultima');
   if(code)LS.del('imp.st.'+code);
@@ -3188,16 +3467,33 @@ function salir(){
 }
 function cambiaCfg(fn){if(!soyHost())return;const c=JSON.parse(JSON.stringify(S.cfg));fn(c);accion('cfg',{cfg:c})}
 const ACT={
+  ajustes(){ajustesSheet()},
+  ajTema(d){setAjuste('theme',d.v);ajustesSheet()},
+  ajSonido(){if(!SFX_ENABLED)return;setAjuste('sound',!SET.sound);if(SET.sound)WK.ctx();ajustesSheet()},
+  ajVibra(){setAjuste('vibra',!SET.vibra);ajustesSheet()},
   jugar(){WK.ctx();PORT_VOL=false;VISTA=PERFIL?'menu':'editor';EDIT=null;scrollTo(0,0)},
   modoAcceso(d){ACCESO.modo=d.m;ACCESO.err='';ACCESO.msg=''},
+  invitado(){
+    LS.del('pc.migrar');INVITADO=true;LS.set('pc.invitado',1);PERFIL=perfilLocal();PORT_VOL=false;EDIT=null;scrollTo(0,0);
+    if(PEND_ENTRAR){if(PERFIL){const c=PEND_ENTRAR;PEND_ENTRAR=null;LS.del('pc.invita');entrar(c,PERFIL.name,false);return}VISTA='editor';return}
+    VISTA='portada'},
+  aAcceso(){if(INVITADO&&perfilLocal())LS.set('pc.migrar',1);INVITADO=false;LS.del('pc.invitado');PERFIL=null;EDIT=null;VISTA='portada';scrollTo(0,0)},
   verClave(){ACCESO.ver=!ACCESO.ver},
   async google(){
     const a=ACCESO;a.err='';a.msg='';a.busy=true;pinta();
-    const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+    if(EN_APP){
+      try{await entraConGoogleNativo();a.busy=false;pinta()}
+      catch(e){a.busy=false;if(!googleCancelado(e)){console.warn('google',e);a.err=errorCuenta(e)}pinta()}
+      return}
+    const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:redirigeA()}});
     if(error){a.busy=false;a.err=errorCuenta(error);pinta()}},
   async apple(){
     const a=ACCESO;a.err='';a.msg='';a.busy=true;pinta();
-    const {error}=await SB.auth.signInWithOAuth({provider:'apple',options:{redirectTo:location.origin+location.pathname}});
+    if(EN_APP){ /* app nativa: el sistema da el token de Apple y Supabase lo valida (no hay redirección ni secret de 6 meses) */
+      try{await entraConAppleNativo();a.busy=false;pinta()}
+      catch(e){a.busy=false;if(!appleCancelado(e)){console.warn('apple',e);a.err=errorCuenta(e)}pinta()}
+      return}
+    const {error}=await SB.auth.signInWithOAuth({provider:'apple',options:{redirectTo:redirigeA()}});
     if(error){a.busy=false;a.err=errorCuenta(error);pinta()}},
   async entrarCuenta(){
     const a=ACCESO;a.err='';a.msg='';if(!a.email||!a.pw){a.err='Escribe el correo y la contraseña.';return}
@@ -3207,20 +3503,20 @@ const ACT={
     const a=ACCESO;a.err='';a.msg='';if(!a.email||!a.pw){a.err='Escribe el correo y una contraseña.';return}
     if(a.pw.length<8){a.err='La contraseña tiene que tener al menos 8 caracteres.';return}
     a.busy=true;pinta();
-    const {data,error}=await SB.auth.signUp({email:a.email.trim(),password:a.pw,options:{emailRedirectTo:location.origin+location.pathname}});
+    const {data,error}=await SB.auth.signUp({email:a.email.trim(),password:a.pw,options:{emailRedirectTo:redirigeA()}});
     if(error){a.busy=false;a.err=errorCuenta(error)}
     else if(!data.session){a.busy=false;a.msg='Cuenta creada. Te hemos mandado un correo para confirmarla; ábrelo y vuelve aquí para entrar.';a.modo='entrar';a.pw=''}
     else VISTA='portada';
     pinta()},
   async olvido(){
     const a=ACCESO;a.err='';a.msg='';if(!a.email){a.err='Escribe primero tu correo.';return}
-    a.busy=true;pinta();const {error}=await SB.auth.resetPasswordForEmail(a.email.trim(),{redirectTo:location.origin+location.pathname});
+    a.busy=true;pinta();const {error}=await SB.auth.resetPasswordForEmail(a.email.trim(),{redirectTo:redirigeA()});
     a.busy=false;if(error)a.err=errorCuenta(error);else a.msg='Si hay una cuenta con ese correo, te llegará un enlace para poner una contraseña nueva.';pinta()},
   async nuevaClave(){
     const pw=(($('#pw')||{}).value||'');ACCESO.err='';if(pw.length<8){ACCESO.err='Mínimo 8 caracteres.';return}
     ACCESO.busy=true;pinta();const {error}=await SB.auth.updateUser({password:pw});ACCESO.busy=false;
     if(error)ACCESO.err=errorCuenta(error);else{toast('Contraseña cambiada');VISTA='portada';ACCESO.pw='';ACCESO.ver=false}pinta()},
-  async salirCuenta(){PORT_VOL=false;if(SB)await SB.auth.signOut();USER=null;PERFIL=null;SES_ID='';EDIT=null;VISTA='portada';olvidaInvitacion();pinta()},
+  async salirCuenta(){PORT_VOL=false;if(SB)await SB.auth.signOut();USER=null;PERFIL=null;fijaBots(false);SES_ID='';EDIT=null;VISTA='portada';olvidaInvitacion();pinta()},
   aBorrarCuenta(){BORRAR={pw:'',palabra:'',err:'',busy:false,ver:false};VISTA='borrarCuenta';scrollTo(0,0)},
   verClaveBorrar(){BORRAR.ver=!BORRAR.ver},
   async confirmarBorrado(){
@@ -3238,7 +3534,7 @@ const ACT={
       const uid=USER.id;
       try{await SB.auth.signOut()}catch(e){}
       LS.del('pc.perfil.'+uid);
-      USER=null;PERFIL=null;SES_ID='';EDIT=null;BORRAR={pw:'',palabra:'',err:'',busy:false,ver:false};
+      USER=null;PERFIL=null;fijaBots(false);SES_ID='';EDIT=null;BORRAR={pw:'',palabra:'',err:'',busy:false,ver:false};
       VISTA='portada';olvidaInvitacion();toast('Cuenta eliminada');pinta();
     }catch(e){
       b.busy=false;b.err=navigator.onLine?'No se ha podido borrar la cuenta. Inténtalo de nuevo.':'Sin conexión: no se ha podido borrar la cuenta.';pinta();
@@ -3251,15 +3547,14 @@ const ACT={
     if(n===base.name&&JSON.stringify(limpiaLook(EDIT.look))===JSON.stringify(base.look))return ACT.editorSalirOk();
     abrirSheet(`<h2>¿Salir sin guardar los cambios?</h2><p class="tenue">Se perderán los cambios que has hecho en tu personaje.</p><button class="b-alarma b-ancho" data-a="editorSalirOk">Salir sin guardar</button><p><button class="b-link" data-a="cerrarSheet">Seguir editando</button></p>`);
   },
-  editorSalirOk(){cerrarSheet();if(!PERFIL){PORT_VOL=!!(CUENTAS&&USER);return ACT.aPortada()}return ACT.aMenu()}, /* con sesión iniciada vuelve a la portada sin cerrarla (PORT_VOL deja ver la portada aunque aún no haya personaje) */
+  editorSalirOk(){cerrarSheet();if(!PERFIL){if(CUENTAS&&INVITADO&&!USER)return ACT.aAcceso();PORT_VOL=!!(CUENTAS&&USER);return ACT.aPortada()}return ACT.aMenu()}, /* con sesión iniciada vuelve a la portada sin cerrarla (PORT_VOL deja ver la portada aunque aún no haya personaje) */
   aPortada(){VISTA='portada';EDIT=null;scrollTo(0,0)},
   aMenu(){VISTA='menu';EDIT=null;scrollTo(0,0)},
   editar(){VISTA='editor';EDIT=null;scrollTo(0,0)},
   look(d){if(!EDIT)return;const i=$('#nom');if(i)EDIT.name=i.value;EDIT.look[d.k]=+d.v;PJ.giraA('editor',d.k==='pack'?Math.PI:null);$('#app')._h=''},
   async guardarPerfil(){const n=(($('#nom')||{}).value||'').trim().slice(0,16);if(!n){toast('Escribe un nombre de jugador');$('#nom').focus();return}
     const look=limpiaLook(EDIT.look);
-    if(CUENTAS){
-      if(!USER)return;
+    if(CUENTAS&&USER){
       GUARDANDO=true;pinta();
       const {error}=await SB.from('profiles').upsert({id:USER.id,username:n,look,updated_at:new Date().toISOString()});
       GUARDANDO=false;
@@ -3273,6 +3568,8 @@ const ACT={
     if(c.length!==5){toast('El código tiene 5 letras');$('#cod').focus();return}entrar(c,n,false)},
   volver(d){if(!PERFIL){VISTA='editor';return}entrar(d.c,PERFIL.name,false)},
   salir(){salir()},
+  salirPartida(){abrirSheet(`<h2>¿Salir de la partida?</h2><p class="tenue">Quedarás fuera como si te hubieran eliminado y no podrás volver a entrar. Los demás verán que has salido, pero no cuál era tu papel.</p><button class="b-alarma b-ancho" data-a="salirPartidaOk">Salir de la partida</button>`)},
+  salirPartidaOk(){salir()},
   compartir(){const url=urlPartida();const txt=`Únete a mi partida de Punto Ciego con el código ${ME.code}`;
     if(navigator.share)navigator.share({title:'Punto Ciego',text:txt,url}).catch(()=>{});
     else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>toast('Enlace copiado'));else toast(url)},
@@ -3291,7 +3588,7 @@ const ACT={
   volverSala(){volverASala()},
   salaMatar(){if(!SHEET||!SHEET.sala)return;const o=objetivosEnSala(SHEET.sala);if(!o.length)return;if(o.length===1){SHEET.m='conf';SHEET.p=o[0]}else{SHEET.m='matar';SHEET.obj=o}},
   salaMatarA(d){if(SHEET){SHEET.m='conf';SHEET.p=d.p}},
-  salaMatarOk(){if(!SHEET||!SHEET.p)return;accion('kill',{target:SHEET.p});vibra(40);cerrarSheet()},
+  salaMatarOk(){if(!SHEET||!SHEET.p)return;accion('kill',{target:SHEET.p});cerrarSheet()},
   salaVolver(){if(SHEET){SHEET.m=null;SHEET.p=null}},
   empezarJuego(){
     if(!SHEET)return;const {tid,step,game,dur,disimulo}=SHEET,el=$('#juego');
@@ -3311,7 +3608,7 @@ const ACT={
   menu(){hojaMas()},
   matar(){MODO={m:'matar'}},
   matarA(d){MODO={m:'conf',p:d.p}},
-  matarOk(){accion('kill',{target:MODO.p});vibra(40);cerrarSheet()},
+  matarOk(){accion('kill',{target:MODO.p});cerrarSheet()},
   volverMenu(){MODO={m:'menu'}},
   camCerrar(){const r=SHEET&&SHEET.sala;cierraCamaras();if(r)hojaSala(r)},
   camAbrir(){abreCamaras()},
@@ -3346,23 +3643,24 @@ const ACT={
   reporta(d){cerrarSheet();reportarJugador(d.p,d.n)},
   /* modo pruebas: cada acción comprueba que de verdad lo es */
   botMas(){botAnade()},
+  botMas3(){botAnade(3)},
   botQuita(){botsQuita()},
   prRol(d){if(enPruebas())accion('pruebas',{rol:d.v})},
   prVel(d){if(enPruebas())accion('pruebas',{vel:d.v})},
-  atajos(){if(!enPruebas())return;ATJ='menu';abrirSheet('<div id="shVivo"></div>',{refresh:vAtajos});setHTML($('#shVivo'),vAtajos())},
+  atajos(){if(!enAtajos())return;ATJ='menu';abrirSheet('<div id="shVivo"></div>',{refresh:vAtajos});setHTML($('#shVivo'),vAtajos())},
   atajoVolver(){ATJ='menu'},
-  atajoReunion(){if(enPruebas()&&S.phase==='play'){accion('atajo',{k:'reunion'});cerrarSheet()}},
-  atajoDebate(){if(enPruebas())accion('atajo',{k:'debate'})},
-  atajoVotar(){if(enPruebas())atajoVotar()},
-  atajoMata(d){if(enPruebas())atajoMata(d.p)},
-  atajoSab(d){if(!enPruebas())return;if(d.k==='door'){ATJ='puerta';return}atajoSab(d.k)},
-  atajoPuertaA(d){if(enPruebas()){atajoSab('door',d.r);ATJ='menu'}},
-  atajoTareas(){if(enPruebas())atajoTareas()}
+  atajoReunion(){if(enAtajos()&&S.phase==='play'){accion('atajo',{k:'reunion'});cerrarSheet()}},
+  atajoDebate(){if(enAtajos())accion('atajo',{k:'debate'})},
+  atajoVotar(){if(enAtajos())atajoVotar()},
+  atajoMata(d){if(enAtajos())atajoMata(d.p)},
+  atajoSab(d){if(!enAtajos())return;if(d.k==='door'){ATJ='puerta';return}atajoSab(d.k)},
+  atajoPuertaA(d){if(enAtajos()){atajoSab('door',d.r);ATJ='menu'}},
+  atajoTareas(){if(enAtajos())atajoTareas()}
 };
 /* Pulsación visible: al tocar un botón se le pone .pulsado (iOS no siempre aplica :active en táctil) y se mantiene al menos 120 ms.
    En los botones que cambian de pantalla se espera hasta que el estado oscuro lleve ~100 ms visible antes de navegar. */
 const SIN_EFECTO=/(^|\s)(b-google|b-apple|b-link|chip|tog|sh-cerrar|g-[\w-]+)(\s|$)/;
-const NAVEGA=new Set(['jugar','crear','unirme','aMenu','aPortada','editar','guardarPerfil','salir','salirCuenta','volver','entendido','empezar','aLobby','galeria','galeriaAbre','galeriaOtra','galeriaLarga','entrarCuenta','crearCuenta','olvido','nuevaClave','aBorrarCuenta','confirmarBorrado','reintentarCuentas','soy','menu','irSala','tarea','reportar','emergencia','volverMenu','volverSala','salaVolver','cerrarSheet']);
+const NAVEGA=new Set(['invitado','aAcceso','jugar','crear','unirme','aMenu','aPortada','editar','guardarPerfil','salir','salirCuenta','volver','entendido','empezar','aLobby','galeria','galeriaAbre','galeriaOtra','galeriaLarga','entrarCuenta','crearCuenta','olvido','nuevaClave','aBorrarCuenta','confirmarBorrado','reintentarCuentas','soy','menu','irSala','tarea','reportar','emergencia','volverMenu','volverSala','salaVolver','cerrarSheet']);
 const pulsable=b=>b&&!b.disabled&&!SIN_EFECTO.test(b.className)&&!b.closest('.paso .ctl,.pestanas,#wkCerrar,.wk-cab');
 function pulsa(e){
   const b=e.target.closest&&e.target.closest('button');if(!pulsable(b))return;
@@ -3405,7 +3703,7 @@ document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id
 /* Papel: se ve solo mientras se mantiene pulsado y se oculta al soltar (táctil, ratón y teclado). Vale para el revelado
    del principio (data-hold=papel) y para «Ver mi papel» del menú (data-hold=rol) */
 function papelVisible(on,que){
-  if(on){if(que==='papel'){if(REVELA)return;REVELA=true;VISTO=true}else{if(ROLVER)return;ROLVER=true}vibra(30)}
+  if(on){if(que==='papel'){if(REVELA)return;REVELA=true;VISTO=true}else{if(ROLVER)return;ROLVER=true}}
   else{if(!REVELA&&!ROLVER)return;REVELA=false;ROLVER=false}
   pinta();
 }
@@ -3420,7 +3718,53 @@ document.addEventListener('pointerdown',()=>{WK.ctx()});
 
 WK.init();
 if(LS.get('imp.micok'))$('#wkMicNota').hidden=true;
-if(PRUEBAS){const f=document.createElement('button');f.id='prFab';f.hidden=true;f.textContent='⚡ Atajos';f.dataset.a='atajos';document.body.appendChild(f)}
+{const f=document.createElement('button');f.id='prFab';f.hidden=true;f.textContent='⚡ Atajos';f.dataset.a='atajos';document.body.appendChild(f)} /* oculto salvo en cuentas con puede_bots (enAtajos) */
+/* Android: botón «atrás» del sistema. Cierra lo que esté encima (hoja, walkie), luego hace lo mismo que «‹ Volver» de cada pantalla y, en plena partida,
+   pregunta «¿Salir de la partida?» (nunca cierra la app ni saca de la partida sin preguntar). La app solo se cierra desde la portada o el acceso. */
+if(ANDROID)try{
+  const AppP=plugin('App'),clic=sel=>{const b=document.querySelector(sel);if(b&&!b.disabled){b.click();return true}return false};
+  AppP.addListener('backButton',()=>{
+    if(!$('#sheet').hidden){cerrarSheet();return}
+    if(WK.abierto){WK.cerrar();return}
+    if(ME&&ME.code){
+      if(S&&mine()&&(S.phase==='play'||S.phase==='meeting')){ACT.salirPartida();return}
+      if(clic('#over [data-a=salir],#app [data-a=salir]'))return;
+      ACT.salirPartida();return;
+    }
+    if(clic('#app [data-a=editorVolver]')||clic('#app [data-a=aMenu]')||clic('#app [data-a=aPortada]'))return;
+    try{AppP.exitApp()}catch(e){}
+  });
+}catch(e){console.warn('back',e)}
+/* Android: las franjas de las barras del sistema las pinta la ventana nativa (el WebView termina encima de ellas, ver MainActivity); aquí se les pasa el color de la página
+   para que se vean como parte de la pantalla (tema claro, oscuro o automático). */
+try{if(ANDROID){
+  const P=plugin('AudioSesion');let ultB='';
+  const hex=c=>{const m=String(c).match(/[\d.]+/g);return m&&m.length>=3?'#'+m.slice(0,3).map(x=>(Math.round(+x)).toString(16).padStart(2,'0')).join(''):'#0c0c0c'};
+  const pintaBarras=()=>{
+    const bg=hex(getComputedStyle(document.body).backgroundColor);
+    if(bg===ultB)return;ultB=bg;
+    try{Promise.resolve(P.barras({arriba:bg,abajo:bg})).catch(()=>{})}catch(e){}
+  };
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>setTimeout(pintaBarras,50));
+  new MutationObserver(pintaBarras).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  const mt=document.querySelector('meta[name=theme-color]');if(mt)new MutationObserver(pintaBarras).observe(mt,{attributes:true,attributeFilter:['content']});
+  pintaBarras();
+}}catch(x){console.warn('barras',x)}
+/* Universal Links: el enlace y el QR de una partida (https://puntostudio.es/punto-ciego/?c=CÓDIGO) abren la app si está instalada (apple-app-site-association en
+   puntostudio.es + entitlement applinks). @capacitor/app avisa con appUrlOpen, también si la app estaba cerrada (el aviso se retiene hasta que hay oyente). */
+function abreEnlace(url){
+  let u;try{u=new URL(url)}catch(e){return}
+  if(u.hostname!=='puntostudio.es'||!/^\/punto-ciego\/(?!beta\/)/.test(u.pathname))return;
+  const c=(u.searchParams.get('c')||'').toUpperCase();if(c.length!==5||/[^A-Z0-9]/.test(c))return;
+  if(ME&&ME.code){if(ME.code!==c)toast('Ya estás en una partida: sal de ella para unirte a la '+c);return}
+  PEND_ENTRAR=c;LS.set('pc.invita',{c,t:Date.now()});
+  if(PERFIL&&(USER||INVITADO)){PEND_ENTRAR=null;LS.del('pc.invita');entrar(c,PERFIL.name,false);return}
+  if(USER&&!PERFIL&&!PERFIL_CARGANDO)VISTA='editor'; /* con sesión y sin personaje: lo crea y al guardar entra (PEND_ENTRAR); sin sesión sale el acceso con el aviso de invitación */
+  pinta();
+}
+if(EN_APP)try{Promise.resolve(plugin('App').addListener('appUrlOpen',e=>abreEnlace(e&&e.url))).catch(x=>console.warn('appUrlOpen',x))}catch(x){console.warn('appUrlOpen',x)}
+/* Android: en un arranque en frío el enlace llega por getLaunchUrl (abreEnlace ignora el segundo aviso del mismo código si ya se está dentro de la sala) */
+if(ANDROID)try{Promise.resolve(plugin('App').getLaunchUrl()).then(r=>r&&r.url&&abreEnlace(r.url)).catch(()=>{})}catch(x){}
 (function arranque(){
   const q=(new URLSearchParams(location.search).get('c')||'').toUpperCase();
   const ult=LS.get('imp.ultima');
@@ -3428,10 +3772,30 @@ if(PRUEBAS){const f=document.createElement('button');f.id='prFab';f.hidden=true;
     const vuelta=/access_token|refresh_token|[?&#]code=|type=(signup|recovery|magiclink|invite|email)|error_description/.test(location.hash+location.search);
     if(q.length===5){PEND_ENTRAR=q;LS.set('pc.invita',{c:q,t:Date.now()})}
     else if(vuelta){const g=LS.get('pc.invita');if(g&&g.c&&Date.now()-g.t<3600000)PEND_ENTRAR=g.c}
+    if(INVITADO&&PERFIL&&PEND_ENTRAR){const c=PEND_ENTRAR;PEND_ENTRAR=null;LS.del('pc.invita');pinta();iniciaCuentas();entrar(c,PERFIL.name,false);return}
     pinta();iniciaCuentas();return}
   if(q&&q===ult&&PERFIL){entrar(q,PERFIL.name,false);return}
   pinta();
 })();
+/* Recarga a fondo: el SW puede seguir sirviendo el index.html viejo, así que busca SW nuevo, vacía las cachés y lo activa antes de recargar */
+async function recargaFuerte(btn){
+  if(btn){btn.disabled=true;btn.textContent='Actualizando…'}
+  const tope=new Promise(r=>setTimeout(r,4000));
+  try{
+    await Promise.race([(async()=>{
+      if('serviceWorker' in navigator){
+        const reg=await navigator.serviceWorker.getRegistration();
+        if(reg){
+          try{await reg.update()}catch(e){}
+          if(reg.waiting)reg.waiting.postMessage('skipWaiting');
+        }
+      }
+      if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}
+      if('serviceWorker' in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}
+    })(),tope]);
+  }catch(e){}
+  location.reload();
+}
 if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   const tenia=!!navigator.serviceWorker.controller;let recargado=false;
   /* Versión nueva instalada: si estás en la portada se recarga sola; en otra pantalla espera a la próxima apertura */
