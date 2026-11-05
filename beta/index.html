@@ -391,8 +391,8 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .titulo i::after{content:"";position:absolute;inset:.13em;border-radius:50%;background:var(--baliza)}
 body.en-portada main{padding:6px 16px 0}
 body.en-portada .portada{padding-top:0}
-body.en-portada .portada .logo{width:min(78vw,300px,21vh);width:min(78vw,300px,21dvh)}
-body.en-portada .portada .titulo{font-size:clamp(34px,min(15vw,6vh),64px);font-size:clamp(34px,min(15vw,6dvh),64px);margin:2px 0 6px}
+body.en-portada .portada .logo{width:min(80vw,320px,24vh);width:min(80vw,320px,24dvh)}
+body.en-portada .portada .titulo{font-size:clamp(36px,min(15vw,6.4vh),66px);font-size:clamp(36px,min(15vw,6.4dvh),66px);margin:2px 0 6px}
 body.en-portada .portada .lema{margin:0 auto 12px}
 body.en-portada .b-jugar{min-height:56px}
 body.en-portada details.reglas{margin:12px 0 0}
@@ -400,7 +400,11 @@ body.en-portada details.reglas{margin:12px 0 0}
 /* Portada: los 4 rasgos como el plano de una casa (muros, puertas con su barrido y un punto rojo escondido) */
 .titulo .l2{margin-right:-.06em}
 body.en-portada #top{border-bottom-color:transparent}
-body.en-portada #top{min-height:0}body.en-portada #top .tb{display:none}body.en-portada main{padding-top:14px}
+body.en-portada #top{min-height:0}body.en-portada #top .tb{display:none}body.en-portada main{box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding-top:12px;padding-bottom:12px;min-height:calc(var(--vh,100dvh) - env(safe-area-inset-top,0px))}
+.cuenta-port{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 0;color:var(--niebla);font-size:15px}
+.cuenta-port b{color:var(--tiza)}
+.cuenta-port .av{border-radius:50%;flex:none}
+.cuenta-port .b-link{margin:0;padding:10px 4px}
 .plano{--muro:var(--tiza);--tabique:color-mix(in srgb,var(--niebla) 75%,transparent);--ambar:#F2A541;--d:15px;position:relative;max-width:340px;margin:4px auto 20px;border:3px solid var(--muro);border-radius:2px;text-align:left}
 :root[data-theme=light] .plano{--ambar:#B26A00}
 @media(prefers-color-scheme:light){:root:not([data-theme]) .plano{--ambar:#B26A00}}
@@ -1902,6 +1906,7 @@ function vPortada(){
   <div class="plano"><ul class="rasgos"><li style="--c:var(--baliza)"><b>Un traidor</b>que nadie ha visto venir<span class="punto-rojo" aria-hidden="true"></span></li><li style="--c:var(--ambar)"><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li style="--c:var(--ok)"><b>Tareas</b>en salas de verdad de tu casa</li><li style="--c:var(--sonar)"><b>Walkie</b>para hablar entre móviles</li></ul><i class="pu pu-h pu-1" aria-hidden="true"></i><i class="pu pu-h pu-2" aria-hidden="true"></i><i class="pu pu-v" aria-hidden="true"></i><i class="pu-e" aria-hidden="true"></i></div>
   <button class="b-jugar" data-a="jugar">Jugar</button>
   ${CUENTAS&&INVITADO&&!USER?`<p style="text-align:center"><button class="b-link" data-a="aAcceso">Crear cuenta o entrar</button></p>`:''}
+  ${CUENTAS&&USER&&PERFIL?`<p class="cuenta-port">${dot({look:PERFIL.look},30)}<span>Hola, <b>${esc(PERFIL.name)}</b></span><button class="b-link" data-a="jugar">Mi cuenta</button></p>`:''}
   ${reglasHTML()}
   <p class="legal">${enlaceLegal('privacidad','Privacidad')} · ${enlaceLegal('terminos','Términos')} · ${enlaceLegal('soporte','Soporte')}</p></section>`;
 }
@@ -3842,6 +3847,6 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   }).catch(()=>{});
 });
 </script>
-<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v43</div>
+<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v44</div>
 </body>
 </html>
