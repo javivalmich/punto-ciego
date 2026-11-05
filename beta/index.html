@@ -391,8 +391,8 @@ body.capa{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 .titulo i::after{content:"";position:absolute;inset:.13em;border-radius:50%;background:var(--baliza)}
 body.en-portada main{padding:6px 16px 0}
 body.en-portada .portada{padding-top:0}
-body.en-portada .portada .logo{width:min(80vw,320px,28vh);width:min(80vw,320px,28dvh)}
-body.en-portada .portada .titulo{font-size:clamp(38px,min(16vw,7vh),68px);font-size:clamp(38px,min(16vw,7dvh),68px);margin:0 0 6px}
+body.en-portada .portada .logo{width:min(78vw,300px,21vh);width:min(78vw,300px,21dvh)}
+body.en-portada .portada .titulo{font-size:clamp(34px,min(15vw,6vh),64px);font-size:clamp(34px,min(15vw,6dvh),64px);margin:2px 0 6px}
 body.en-portada .portada .lema{margin:0 auto 12px}
 body.en-portada .b-jugar{min-height:56px}
 body.en-portada details.reglas{margin:12px 0 0}
@@ -400,15 +400,15 @@ body.en-portada details.reglas{margin:12px 0 0}
 /* Portada: los 4 rasgos como el plano de una casa (muros, puertas con su barrido y un punto rojo escondido) */
 .titulo .l2{margin-right:-.06em}
 body.en-portada #top{border-bottom-color:transparent}
-body.en-portada #top .marca{visibility:hidden}
-.plano{--muro:var(--tiza);--tabique:color-mix(in srgb,var(--niebla) 75%,transparent);--ambar:#F2A541;--d:18px;position:relative;max-width:360px;margin:4px auto 20px;border:3px solid var(--muro);border-radius:2px;text-align:left}
+body.en-portada #top{min-height:0}body.en-portada #top .tb{display:none}body.en-portada main{padding-top:14px}
+.plano{--muro:var(--tiza);--tabique:color-mix(in srgb,var(--niebla) 75%,transparent);--ambar:#F2A541;--d:15px;position:relative;max-width:340px;margin:4px auto 20px;border:3px solid var(--muro);border-radius:2px;text-align:left}
 :root[data-theme=light] .plano{--ambar:#B26A00}
 @media(prefers-color-scheme:light){:root:not([data-theme]) .plano{--ambar:#B26A00}}
 .rasgos{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:2px;background:var(--tabique)}
-.rasgos li{--rejilla:color-mix(in srgb,var(--tiza) 5%,transparent);--rejilla-c:color-mix(in srgb,var(--c) 9%,transparent);position:relative;isolation:isolate;background-color:var(--acero);background-image:linear-gradient(var(--rejilla) 1px,transparent 1px),linear-gradient(90deg,var(--rejilla) 1px,transparent 1px);background-size:10px 10px;background-position:-1px -1px;padding:8px 10px 22px;font-size:12.5px;color:var(--niebla);line-height:1.25}
+.rasgos li{--rejilla:color-mix(in srgb,var(--tiza) 5%,transparent);--rejilla-c:color-mix(in srgb,var(--c) 9%,transparent);position:relative;isolation:isolate;background-color:var(--acero);background-image:linear-gradient(var(--rejilla) 1px,transparent 1px),linear-gradient(90deg,var(--rejilla) 1px,transparent 1px);background-size:10px 10px;background-position:-1px -1px;padding:7px 9px 18px;font-size:12px;color:var(--niebla);line-height:1.2}
 /* Luces: cada sala se enciende por turnos (con parpadeo de fluorescente) y las demás quedan apagadas */
 .rasgos li::before{content:"";position:absolute;inset:0;z-index:-1;background-color:color-mix(in srgb,var(--c) 18%,var(--acero));background-image:linear-gradient(var(--rejilla-c) 1px,transparent 1px),linear-gradient(90deg,var(--rejilla-c) 1px,transparent 1px);background-size:10px 10px;background-position:-1px -1px;opacity:0;animation:luz 10s linear infinite;animation-delay:var(--t)}
-.rasgos b{display:block;color:var(--tiza);font-size:15px;margin-bottom:1px;animation:luz-t 10s linear infinite;animation-delay:var(--t)}
+.rasgos b{display:block;color:var(--tiza);font-size:14px;margin-bottom:1px;animation:luz-t 10s linear infinite;animation-delay:var(--t)}
 .rasgos li:nth-child(1){--t:0s}.rasgos li:nth-child(2){--t:2.5s}.rasgos li:nth-child(4){--t:5s}.rasgos li:nth-child(3){--t:7.5s}
 @keyframes luz{0%{opacity:0}1.5%{opacity:1}2.5%{opacity:.15}3.5%{opacity:.9}4.5%{opacity:.3}6%{opacity:1}22%{opacity:1}24.5%,100%{opacity:0}}
 @keyframes luz-t{0%{color:var(--tiza)}1.5%{color:var(--c)}2.5%{color:var(--tiza)}3.5%{color:var(--c)}4.5%{color:var(--tiza)}6%,22%{color:var(--c)}24.5%,100%{color:var(--tiza)}}
@@ -423,7 +423,7 @@ body.en-portada #top .marca{visibility:hidden}
 .pu-v{left:calc(50% - 1px);top:calc(100% - var(--d) - 4px);border-bottom:2px solid var(--tabique);--hueco:var(--acero)}
 .pu-v::before{left:0;top:0;width:2px;height:var(--d)}
 .pu-e{position:absolute;left:14px;bottom:-3px;width:24px;height:3px;background:var(--acero)}
-.punto-rojo{position:absolute;right:12px;bottom:8px;width:8px;height:8px;border-radius:50%;background:var(--baliza)}
+.punto-rojo{position:absolute;right:10px;bottom:7px;width:7px;height:7px;border-radius:50%;background:var(--baliza)}
 .punto-rojo::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--baliza);opacity:0;animation:radar 2.4s ease-out infinite}
 @keyframes radar{0%{transform:scale(.5);opacity:.9}70%,100%{transform:scale(1.6);opacity:0}}
 @media(prefers-reduced-motion:reduce){.punto-rojo::after{animation:none}}
@@ -3842,6 +3842,6 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   }).catch(()=>{});
 });
 </script>
-<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v42</div>
+<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v43</div>
 </body>
 </html>
