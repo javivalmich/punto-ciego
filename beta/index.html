@@ -412,7 +412,7 @@ body.en-portada #top .marca{visibility:hidden}
 .pu::after{content:"";position:absolute;left:calc(-1*var(--d));top:0;width:calc(2*var(--d));height:calc(2*var(--d));box-sizing:border-box;border-radius:50%;border:1.5px dashed var(--tabique);clip-path:inset(0 0 var(--d) var(--d))}
 .pu-h{top:calc(50% - var(--d) - 1px);border-left:2px solid var(--tabique)}
 .pu-h::before{left:0;top:var(--d);width:var(--d);height:2px}
-.pu-1{left:calc(50% - 34px);--hueco:color-mix(in srgb,var(--ok) 13%,var(--acero))}
+.pu-1{left:28%;--hueco:color-mix(in srgb,var(--baliza) 13%,var(--acero))}
 .pu-2{right:14px;--hueco:color-mix(in srgb,var(--ambar) 13%,var(--acero))}
 .pu-v{left:calc(50% - 1px);top:calc(100% - var(--d) - 4px);border-bottom:2px solid var(--tabique);--hueco:color-mix(in srgb,var(--sonar) 13%,var(--acero))}
 .pu-v::before{left:0;top:0;width:2px;height:var(--d)}
@@ -1893,7 +1893,7 @@ const reglasHTML=()=>`<details class="reglas"${REGLAS_ABIERTAS?' open':''}><summ
 document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('details.reglas'))REGLAS_ABIERTAS=e.target.open},true);
 function vPortada(){
   return `<section class="portada"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br><span class="l2">CIEGO</span></h1><p class="lema">No puedes confiar en lo que ves</p>
-  <div class="plano"><ul class="rasgos"><li style="--c:var(--ok)"><b>Tareas</b>en salas de verdad de tu casa</li><li style="--c:var(--ambar)"><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li style="--c:var(--baliza)"><b>Un traidor</b>que nadie ha visto venir<span class="punto-rojo" aria-hidden="true"></span></li><li style="--c:var(--sonar)"><b>Walkie</b>para hablar entre móviles</li></ul><i class="pu pu-h pu-1" aria-hidden="true"></i><i class="pu pu-h pu-2" aria-hidden="true"></i><i class="pu pu-v" aria-hidden="true"></i><i class="pu-e" aria-hidden="true"></i></div>
+  <div class="plano"><ul class="rasgos"><li style="--c:var(--baliza)"><b>Un traidor</b>que nadie ha visto venir<span class="punto-rojo" aria-hidden="true"></span></li><li style="--c:var(--ambar)"><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li style="--c:var(--ok)"><b>Tareas</b>en salas de verdad de tu casa</li><li style="--c:var(--sonar)"><b>Walkie</b>para hablar entre móviles</li></ul><i class="pu pu-h pu-1" aria-hidden="true"></i><i class="pu pu-h pu-2" aria-hidden="true"></i><i class="pu pu-v" aria-hidden="true"></i><i class="pu-e" aria-hidden="true"></i></div>
   <button class="b-jugar" data-a="jugar">Jugar</button>
   ${CUENTAS&&INVITADO&&!USER?`<p style="text-align:center"><button class="b-link" data-a="aAcceso">Crear cuenta o entrar</button></p>`:''}
   ${reglasHTML()}
@@ -3836,6 +3836,6 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   }).catch(()=>{});
 });
 </script>
-<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v39</div>
+<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v40</div>
 </body>
 </html>
