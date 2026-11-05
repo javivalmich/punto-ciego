@@ -401,27 +401,27 @@ body.en-portada details.reglas{margin:12px 0 0}
 .titulo .l2{margin-right:-.06em}
 body.en-portada #top{border-bottom-color:transparent}
 body.en-portada #top .marca{visibility:hidden}
-.plano{--muro:var(--tiza);--tabique:color-mix(in srgb,var(--niebla) 75%,transparent);--rejilla:color-mix(in srgb,var(--tiza) 5%,transparent);position:relative;max-width:360px;margin:4px auto 22px;border:3px solid var(--muro);border-radius:2px;text-align:left}
+.plano{--muro:var(--tiza);--tabique:color-mix(in srgb,var(--niebla) 75%,transparent);--ambar:#F2A541;--d:18px;position:relative;max-width:360px;margin:4px auto 20px;border:3px solid var(--muro);border-radius:2px;text-align:left}
+:root[data-theme=light] .plano{--ambar:#B26A00}
+@media(prefers-color-scheme:light){:root:not([data-theme]) .plano{--ambar:#B26A00}}
 .rasgos{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:2px;background:var(--tabique)}
-.rasgos li{position:relative;background-color:var(--acero);background-image:linear-gradient(var(--rejilla) 1px,transparent 1px),linear-gradient(90deg,var(--rejilla) 1px,transparent 1px);background-size:12px 12px;background-position:-1px -1px;padding:12px 14px 34px;font-size:14px;color:var(--niebla);line-height:1.3}
-.rasgos b{display:block;color:var(--tiza);font-size:17px;margin-bottom:2px}
-.pu{position:absolute;width:26px;height:26px;box-sizing:border-box;pointer-events:none}
-.pu::before{content:"";position:absolute;background:var(--acero)}
-.pu::after{content:"";position:absolute;left:-26px;top:0;width:52px;height:52px;box-sizing:border-box;border-radius:50%;border:1.5px dashed var(--tabique);clip-path:inset(0 0 26px 26px)}
-.pu-h{top:calc(50% - 27px);border-left:2px solid var(--tabique)}
-.pu-h::before{left:0;top:26px;width:26px;height:2px}
-.pu-1{left:calc(50% - 46px)}
-.pu-2{right:18px}
-.pu-v{left:calc(50% - 1px);top:calc(100% - 34px);border-bottom:2px solid var(--tabique)}
-.pu-v::before{left:0;top:0;width:2px;height:26px}
-.pu-e{position:absolute;left:16px;bottom:-3px;width:30px;height:3px;background:var(--acero)}
-.punto-rojo{position:absolute;right:16px;bottom:13px;width:10px;height:10px;border-radius:50%;background:var(--baliza)}
-.punto-rojo::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1.5px solid var(--baliza);opacity:0;animation:radar 2.4s ease-out infinite}
+.rasgos li{--suelo:color-mix(in srgb,var(--c) 13%,var(--acero));--rejilla:color-mix(in srgb,var(--c) 9%,transparent);position:relative;background-color:var(--suelo);background-image:linear-gradient(var(--rejilla) 1px,transparent 1px),linear-gradient(90deg,var(--rejilla) 1px,transparent 1px);background-size:10px 10px;background-position:-1px -1px;padding:8px 10px 22px;font-size:12.5px;color:var(--niebla);line-height:1.25}
+.rasgos b{display:block;color:var(--c);font-size:15px;margin-bottom:1px}
+.pu{position:absolute;width:var(--d);height:var(--d);box-sizing:border-box;pointer-events:none}
+.pu::before{content:"";position:absolute;background:var(--hueco)}
+.pu::after{content:"";position:absolute;left:calc(-1*var(--d));top:0;width:calc(2*var(--d));height:calc(2*var(--d));box-sizing:border-box;border-radius:50%;border:1.5px dashed var(--tabique);clip-path:inset(0 0 var(--d) var(--d))}
+.pu-h{top:calc(50% - var(--d) - 1px);border-left:2px solid var(--tabique)}
+.pu-h::before{left:0;top:var(--d);width:var(--d);height:2px}
+.pu-1{left:calc(50% - 34px);--hueco:color-mix(in srgb,var(--ok) 13%,var(--acero))}
+.pu-2{right:14px;--hueco:color-mix(in srgb,var(--ambar) 13%,var(--acero))}
+.pu-v{left:calc(50% - 1px);top:calc(100% - var(--d) - 4px);border-bottom:2px solid var(--tabique);--hueco:color-mix(in srgb,var(--sonar) 13%,var(--acero))}
+.pu-v::before{left:0;top:0;width:2px;height:var(--d)}
+.pu-e{position:absolute;left:14px;bottom:-3px;width:24px;height:3px;background:var(--acero)}
+.punto-rojo{position:absolute;right:12px;bottom:8px;width:8px;height:8px;border-radius:50%;background:var(--baliza)}
+.punto-rojo::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--baliza);opacity:0;animation:radar 2.4s ease-out infinite}
 @keyframes radar{0%{transform:scale(.5);opacity:.9}70%,100%{transform:scale(1.6);opacity:0}}
 @media(prefers-reduced-motion:reduce){.punto-rojo::after{animation:none}}
-body.en-portada .plano{margin:0 auto 16px}
-body.en-portada .rasgos li{padding:9px 12px 32px;font-size:13px}
-body.en-portada .rasgos b{font-size:16px}
+body.en-portada .plano{margin:0 auto 14px}
 .portada.acc .logo{width:min(46vw,170px)}
 .portada.acc .titulo{font-size:clamp(34px,11vw,44px);margin:0 0 6px}
 .portada.acc .lema{margin:0 auto 6px}
@@ -1893,7 +1893,7 @@ const reglasHTML=()=>`<details class="reglas"${REGLAS_ABIERTAS?' open':''}><summ
 document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('details.reglas'))REGLAS_ABIERTAS=e.target.open},true);
 function vPortada(){
   return `<section class="portada"><img class="logo" src="${IMG.logo}" width="300" height="300" alt="Punto Ciego"><h1 class="titulo">PUNT<i></i><br><span class="l2">CIEGO</span></h1><p class="lema">No puedes confiar en lo que ves</p>
-  <div class="plano"><ul class="rasgos"><li><b>Tareas</b>en salas de verdad de tu casa</li><li><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li><b>Un traidor</b>que nadie ha visto venir<span class="punto-rojo" aria-hidden="true"></span></li><li><b>Walkie</b>para hablar entre móviles</li></ul><i class="pu pu-h pu-1" aria-hidden="true"></i><i class="pu pu-h pu-2" aria-hidden="true"></i><i class="pu pu-v" aria-hidden="true"></i><i class="pu-e" aria-hidden="true"></i></div>
+  <div class="plano"><ul class="rasgos"><li style="--c:var(--ok)"><b>Tareas</b>en salas de verdad de tu casa</li><li style="--c:var(--ambar)"><b>Sabotajes</b>gas, apagones, puertas cerradas</li><li style="--c:var(--baliza)"><b>Un traidor</b>que nadie ha visto venir<span class="punto-rojo" aria-hidden="true"></span></li><li style="--c:var(--sonar)"><b>Walkie</b>para hablar entre móviles</li></ul><i class="pu pu-h pu-1" aria-hidden="true"></i><i class="pu pu-h pu-2" aria-hidden="true"></i><i class="pu pu-v" aria-hidden="true"></i><i class="pu-e" aria-hidden="true"></i></div>
   <button class="b-jugar" data-a="jugar">Jugar</button>
   ${CUENTAS&&INVITADO&&!USER?`<p style="text-align:center"><button class="b-link" data-a="aAcceso">Crear cuenta o entrar</button></p>`:''}
   ${reglasHTML()}
@@ -3836,6 +3836,6 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>{
   }).catch(()=>{});
 });
 </script>
-<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v38</div>
+<div id="betaTag" aria-hidden="true" style="position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;font:700 10px/1 system-ui,sans-serif;letter-spacing:.14em;color:#fff;background:#ff4637;padding:3px 6px;border-radius:4px;opacity:.85;pointer-events:none">BETA v39</div>
 </body>
 </html>
